@@ -1,41 +1,39 @@
 
+// Use your existing Navbar component, but add authentication UI
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BarChart, Link as LinkIcon } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
+  const { user, signOut } = useAuth();
+
   return (
-    <header className="bg-white border-b sticky top-0 z-10">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-2">
-          <LinkIcon className="h-6 w-6 text-brand-500" />
-          <span className="font-bold text-xl text-gray-900">ShortLink</span>
+    <nav className="bg-white border-b px-4 py-2.5">
+      <div className="flex justify-between items-center max-w-5xl mx-auto">
+        <Link to="/" className="text-xl font-bold text-gray-800">
+          ShortLink Insight Hub
         </Link>
-        
-        <nav>
-          <ul className="flex items-center gap-6">
-            <li>
-              <Link to="/" className="text-gray-600 hover:text-brand-600 transition-colors">
-                Inicio
+        <div className="flex items-center gap-4">
+          {user ? (
+            <>
+              <Link to="/dashboard">
+                <Button variant="ghost">Dashboard</Button>
               </Link>
-            </li>
-            <li>
-              <Link to="/dashboard" className="text-gray-600 hover:text-brand-600 transition-colors">
-                Mis URLs
-              </Link>
-            </li>
-            <li>
-              <Button asChild variant="default" className="bg-brand-500 hover:bg-brand-600">
-                <Link to="/dashboard" className="flex items-center gap-1">
-                  <BarChart className="h-4 w-4" />
-                  <span>Analítica</span>
-                </Link>
+              <Button onClick={signOut} variant="outline">
+                Cerrar sesión
               </Button>
-            </li>
-          </ul>
-        </nav>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button className="bg-brand-500 hover:bg-brand-600">
+                Iniciar sesión
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
-    </header>
+    </nav>
   );
 };
 

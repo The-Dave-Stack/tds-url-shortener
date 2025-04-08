@@ -9,13 +9,101 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      analytics: {
+        Row: {
+          country: string | null
+          id: string
+          ip: string | null
+          referrer: string | null
+          timestamp: string
+          url_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          country?: string | null
+          id?: string
+          ip?: string | null
+          referrer?: string | null
+          timestamp?: string
+          url_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          country?: string | null
+          id?: string
+          ip?: string | null
+          referrer?: string | null
+          timestamp?: string
+          url_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_url_id_fkey"
+            columns: ["url_id"]
+            isOneToOne: false
+            referencedRelation: "urls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      urls: {
+        Row: {
+          clicks: number
+          created_at: string
+          custom_alias: string | null
+          id: string
+          original_url: string
+          short_code: string
+          user_id: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          custom_alias?: string | null
+          id?: string
+          original_url: string
+          short_code: string
+          user_id: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          custom_alias?: string | null
+          id?: string
+          original_url?: string
+          short_code?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_clicks: {
+        Args: { url_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

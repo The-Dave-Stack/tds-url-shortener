@@ -1,8 +1,7 @@
 
 import axios from 'axios';
-
-// In a real application, this would be an environment variable
-const API_BASE_URL = 'http://localhost:3000/api';
+import { supabase } from '@/integrations/supabase/client';
+import { generateShortCode } from '@/utils/validation';
 
 // Interface for the URL data
 export interface UrlData {
@@ -52,11 +51,40 @@ export const createShortUrl = async (
   customAlias?: string
 ): Promise<UrlData> => {
   try {
-    const response = await axios.post<UrlData>(`${API_BASE_URL}/urls`, {
-      originalUrl,
-      customAlias,
-    });
-    return response.data;
+    const user = supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+    
+    const shortCode = customAlias || generateShortCode();
+    
+    const { data, error } = await supabase
+      .from('urls')
+      .insert([
+        { 
+          original_url: originalUrl,
+          short_code: shortCode,
+          custom_alias: customAlias || null
+        }
+      ])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    if (!data) {
+      throw new Error('Error al crear la URL acortada');
+    }
+    
+    return {
+      id: data.id,
+      originalUrl: data.original_url,
+      shortCode: data.short_code,
+      createdAt: data.created_at,
+      clicks: data.clicks,
+      customAlias: data.custom_alias
+    };
   } catch (error) {
     console.error('Error creating short URL:', error);
     throw error;
@@ -69,8 +97,25 @@ export const createShortUrl = async (
  */
 export const getUserUrls = async (): Promise<UrlData[]> => {
   try {
-    const response = await axios.get<UrlData[]>(`${API_BASE_URL}/urls`);
-    return response.data;
+    const { data, error } = await supabase
+      .from('urls')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    if (!data) {
+      return [];
+    }
+    
+    return data.map(url => ({
+      id: url.id,
+      originalUrl: url.original_url,
+      shortCode: url.short_code,
+      createdAt: url.created_at,
+      clicks: url.clicks,
+      customAlias: url.custom_alias
+    }));
   } catch (error) {
     console.error('Error fetching user URLs:', error);
     throw error;
@@ -84,23 +129,72 @@ export const getUserUrls = async (): Promise<UrlData[]> => {
  */
 export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
   try {
-    const response = await axios.get<UrlAnalytics>(`${API_BASE_URL}/urls/${id}/analytics`);
-    return response.data;
+    // Get URL data
+    const { data: urlData, error: urlError } = await supabase
+      .from('urls')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (urlError) throw urlError;
+    
+    // Get analytics data
+    const { data: analyticsData, error: analyticsError } = await supabase
+      .from('analytics')
+      .select('*')
+      .eq('url_id', id)
+      .order('timestamp', { ascending: false });
+      
+    if (analyticsError) throw analyticsError;
+    
+    // Process data to get daily clicks
+    const clicksByDay = new Map<string, number>();
+    const countriesMap = new Map<string, number>();
+    const recentVisits: Visit[] = [];
+    
+    analyticsData?.forEach(visit => {
+      // Process daily clicks
+      const date = new Date(visit.timestamp).toISOString().split('T')[0];
+      clicksByDay.set(date, (clicksByDay.get(date) || 0) + 1);
+      
+      // Process countries
+      if (visit.country) {
+        countriesMap.set(visit.country, (countriesMap.get(visit.country) || 0) + 1);
+      }
+      
+      // Add to recent visits
+      recentVisits.push({
+        id: visit.id,
+        timestamp: visit.timestamp,
+        country: visit.country || 'Unknown',
+        userAgent: visit.user_agent || 'Unknown',
+        ip: visit.ip
+      });
+    });
+    
+    // Convert maps to arrays
+    const dailyClicks = Array.from(clicksByDay.entries()).map(([date, clicks]) => ({
+      date,
+      clicks
+    })).sort((a, b) => a.date.localeCompare(b.date));
+    
+    const countries = Array.from(countriesMap.entries()).map(([name, value]) => ({
+      name,
+      value
+    })).sort((a, b) => b.value - a.value);
+    
+    return {
+      id: urlData.id,
+      shortCode: urlData.short_code,
+      originalUrl: urlData.original_url,
+      createdAt: urlData.created_at,
+      clicks: urlData.clicks,
+      dailyClicks,
+      countries,
+      recentVisits: recentVisits.slice(0, 10) // Take only 10 most recent
+    };
   } catch (error) {
     console.error('Error fetching URL analytics:', error);
     throw error;
   }
-};
-
-// This function would be used in a backend API call
-// It simulates how you would generate a unique short code
-export const generateShortCode = (length = 6): string => {
-  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  
-  return result;
 };

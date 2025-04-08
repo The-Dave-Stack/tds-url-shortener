@@ -4,8 +4,11 @@ import URLShortenerForm from "@/components/URLShortenerForm";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BarChart, Link as LinkIcon } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <Layout>
       <div className="max-w-5xl mx-auto">
@@ -63,15 +66,25 @@ const Index = () => {
         </div>
         
         <div className="mt-16 text-center">
-          <p className="text-gray-600 mb-4">¿Listo para gestionar tus enlaces acortados?</p>
+          <p className="text-gray-600 mb-4">
+            {user 
+              ? '¿Listo para gestionar tus enlaces acortados?' 
+              : '¿Quieres acceder a todas las funcionalidades?'}
+          </p>
           <Button 
             asChild
             className="bg-brand-500 hover:bg-brand-600"
             size="lg"
           >
-            <Link to="/dashboard">
-              <BarChart className="h-5 w-5 mr-2" />
-              Ir al Dashboard
+            <Link to={user ? "/dashboard" : "/auth"}>
+              {user ? (
+                <>
+                  <BarChart className="h-5 w-5 mr-2" />
+                  Ir al Dashboard
+                </>
+              ) : (
+                'Iniciar sesión o Registrarse'
+              )}
             </Link>
           </Button>
         </div>
