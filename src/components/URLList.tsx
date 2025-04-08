@@ -1,34 +1,37 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import URLCard from "./URLCard";
-
-// Mock data that would come from the backend API
-const mockData = [
-  {
-    id: "1",
-    originalUrl: "https://ejemplo-de-url-super-larga-que-necesitamos-acortar-para-compartir-facilmente.com/blog/articulo-1",
-    shortCode: "abc123",
-    createdAt: "2023-04-05T12:00:00Z",
-    clicks: 145
-  },
-  {
-    id: "2",
-    originalUrl: "https://otra-url-demasiado-larga-para-compartir-en-redes-sociales.com/productos/categoria/subcategoria/producto",
-    shortCode: "xyz789",
-    createdAt: "2023-04-02T10:30:00Z",
-    clicks: 87
-  },
-  {
-    id: "3",
-    originalUrl: "https://documentacion-tecnica-con-nombre-muy-extenso.org/manual/capitulo-5/seccion-3.html",
-    shortCode: "def456",
-    createdAt: "2023-04-01T09:15:00Z",
-    clicks: 32
-  }
-];
+import { getUserUrls, UrlData } from "@/utils/api";
+import { Loader2 } from "lucide-react";
 
 const URLList = () => {
-  const [urls] = useState(mockData);
+  const [urls, setUrls] = useState<UrlData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUrls = async () => {
+      try {
+        const userUrls = await getUserUrls();
+        setUrls(userUrls);
+      } catch (error) {
+        console.error("Error obteniendo URLs:", error);
+        toast.error("No se pudieron cargar tus URLs acortadas");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUrls();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

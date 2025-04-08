@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Copy } from "lucide-react";
-import { isValidUrl } from "@/utils/validation";
+import { isValidUrl, isValidShortCode } from "@/utils/validation";
+import { createShortUrl } from "@/utils/api";
 
 const URLShortenerForm = () => {
   const [url, setUrl] = useState("");
@@ -20,24 +21,27 @@ const URLShortenerForm = () => {
       return;
     }
     
+    if (customAlias && !isValidShortCode(customAlias)) {
+      toast.error("El alias personalizado solo puede contener letras, números, guiones y guiones bajos");
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await createShortUrl(url, customAlias);
       
-      const shortCode = customAlias || Math.random().toString(36).substring(2, 8);
-      const shortUrl = `${window.location.origin}/${shortCode}`;
+      const shortUrl = `${window.location.origin}/${result.shortCode}`;
       
       setShortenedUrl(shortUrl);
       toast.success("¡URL acortada con éxito!");
       
-      // In a real app, we would call the API here
-      // const response = await createShortUrl(url, customAlias);
-      // setShortenedUrl(response.shortUrl);
+      // Limpiar el formulario
+      setUrl("");
+      setCustomAlias("");
     } catch (error) {
-      toast.error("Ocurrió un error al acortar la URL");
-      console.error(error);
+      console.error("Error al acortar URL:", error);
+      toast.error("Ocurrió un error al acortar la URL. Asegúrate de estar autenticado.");
     } finally {
       setLoading(false);
     }

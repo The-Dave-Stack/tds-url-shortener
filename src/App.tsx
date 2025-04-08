@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import RequireAuth from "./components/RequireAuth";
+import RedirectHandler from "./components/RedirectHandler";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,8 @@ const App = () => (
                 </RequireAuth>
               } 
             />
+            {/* Ruta para manejar redirecciones de URLs cortas */}
+            <Route path="/:shortCode" element={<RedirectHandler />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
