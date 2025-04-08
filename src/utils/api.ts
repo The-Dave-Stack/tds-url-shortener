@@ -1,5 +1,4 @@
 
-import axios from 'axios';
 import { supabase } from '@/integrations/supabase/client';
 import { generateShortCode } from '@/utils/validation';
 
@@ -51,9 +50,9 @@ export const createShortUrl = async (
   customAlias?: string
 ): Promise<UrlData> => {
   try {
-    const user = supabase.auth.getUser();
+    const { data: user } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!user.user) {
       throw new Error('Usuario no autenticado');
     }
     
@@ -65,7 +64,8 @@ export const createShortUrl = async (
         { 
           original_url: originalUrl,
           short_code: shortCode,
-          custom_alias: customAlias || null
+          custom_alias: customAlias || null,
+          user_id: user.user.id
         }
       ])
       .select()
@@ -97,9 +97,16 @@ export const createShortUrl = async (
  */
 export const getUserUrls = async (): Promise<UrlData[]> => {
   try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('Usuario no autenticado');
+    }
+    
     const { data, error } = await supabase
       .from('urls')
       .select('*')
+      .eq('user_id', user.user.id)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
@@ -138,6 +145,10 @@ export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
       
     if (urlError) throw urlError;
     
+    if (!urlData) {
+      throw new Error('URL no encontrada');
+    }
+    
     // Get analytics data
     const { data: analyticsData, error: analyticsError } = await supabase
       .from('analytics')
@@ -147,12 +158,14 @@ export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
       
     if (analyticsError) throw analyticsError;
     
+    const analyticsList = analyticsData || [];
+    
     // Process data to get daily clicks
     const clicksByDay = new Map<string, number>();
     const countriesMap = new Map<string, number>();
     const recentVisits: Visit[] = [];
     
-    analyticsData?.forEach(visit => {
+    analyticsList.forEach(visit => {
       // Process daily clicks
       const date = new Date(visit.timestamp).toISOString().split('T')[0];
       clicksByDay.set(date, (clicksByDay.get(date) || 0) + 1);

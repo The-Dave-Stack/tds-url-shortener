@@ -23,3 +23,19 @@ export const isValidShortCode = (code: string): boolean => {
   const pattern = /^[a-zA-Z0-9-_]+$/;
   return pattern.test(code);
 };
+
+/**
+ * Generates a random short code for URLs
+ * @param length Length of the short code (default: 6)
+ * @returns A random alphanumeric string
+ */
+export const generateShortCode = (length = 6): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  return result;
+};
