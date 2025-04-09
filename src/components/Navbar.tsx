@@ -1,69 +1,106 @@
-
-// Navbar.tsx - Main navigation bar component
-// Provides navigation links and authentication UI
-
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "@/components/ui/theme-provider";
+import {
+  Avatar,
+  AvatarFallback,
+} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ModeToggle } from "@/components/ModeToggle";
+import { LogOut, Link as LinkIcon, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Moon, Sun, Link as LinkIcon } from "lucide-react";
-import { useTheme } from "@/hooks/use-theme";
 
-/**
- * Main navigation bar component
- * Displays logo, navigation links and authentication options
- */
+import { useTranslation } from 'react-i18next';
+import { Shield } from 'lucide-react';
+import LanguageSelector from './LanguageSelector';
+import NotificationsMenu from './NotificationsMenu';
+
 const Navbar = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { t } = useTranslation();
+  
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
 
   return (
-    <nav className="bg-white dark:bg-petrol-blue border-b border-soft-gray dark:border-dark-blue-gray px-4 py-2.5 shadow-sm">
-      <div className="flex justify-between items-center max-w-5xl mx-auto">
-        <Link to="/" className="text-xl font-bold text-petrol-blue dark:text-white flex items-center gap-2">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center">
+        <Link to="/" className="flex items-center gap-2">
           <LinkIcon className="h-6 w-6 text-teal-deep" />
-          <span>URL Shortener</span>
+          <span className="text-xl font-bold text-teal-deep tracking-tight">
+            {t('common.appName')}
+          </span>
         </Link>
-        <div className="flex items-center gap-4">
-          {/* Theme toggle */}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="text-petrol-blue dark:text-fog-gray"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-          
+        <div className="ml-auto flex items-center gap-2">
+          <LanguageSelector />
+          <ModeToggle />
+          {user && <NotificationsMenu />}
           {user ? (
-            <>
-              <Link to="/dashboard">
-                <Button variant="ghost" className="text-petrol-blue dark:text-fog-gray hover:text-teal-deep dark:hover:text-mint-green">
-                  Dashboard
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar>
+                    <AvatarFallback>
+                      {user.email?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
-              </Link>
-              <Button 
-                onClick={signOut} 
-                variant="outline"
-                className="border-teal-deep text-teal-deep hover:bg-mint-green/10 hover:text-mint-green hover:border-mint-green"
-              >
-                Sign Out
-              </Button>
-            </>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    {t('dashboard.dashboard')}
+                  </Link>
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin">
+                      <Shield className="mr-2 h-4 w-4" />
+                      {t('admin.adminPanel')}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t('auth.signOut')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
-            <Link to="/auth">
-              <Button className="bg-teal-deep hover:bg-mint-green text-white">
-                Sign In
-              </Button>
-            </Link>
+            <Button asChild size="sm" variant="default">
+              <Link to="/auth">{t('auth.signIn')}</Link>
+            </Button>
           )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

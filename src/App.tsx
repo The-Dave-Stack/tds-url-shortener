@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import RequireAuth from "./components/RequireAuth";
 import RedirectHandler from "./components/RedirectHandler";
 import Health from "./pages/Health";
+import AdminPanel from "./pages/AdminPanel";
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -50,6 +51,14 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <Dashboard />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <RequireAuth>
+                    <AdminPanel />
                   </RequireAuth>
                 } 
               />

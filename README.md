@@ -19,7 +19,10 @@ A modern URL shortener application with analytics capabilities. Shorten long URL
 
 - 🔗 URL shortening with custom aliases
 - 📊 Detailed analytics and tracking
-- 👤 User authentication
+- 👤 User authentication with roles (Admin & User)
+- 🔒 Admin panel for user management and app settings
+- 🔔 In-app notifications system
+- 🌐 Multilingual support (English & Spanish)
 - 🌓 Dark/Light theme
 - 📱 Responsive design
 - 🔒 Secure link management
@@ -29,6 +32,7 @@ A modern URL shortener application with analytics capabilities. Shorten long URL
 - **Frontend**: React, TypeScript, TailwindCSS, shadcn/ui
 - **Backend**: Supabase (PostgreSQL, Authentication, Edge Functions)
 - **State Management**: React Query, Context API
+- **i18n**: React-i18next
 - **Deployment**: Docker
 
 ## 📋 Prerequisites
@@ -96,10 +100,12 @@ The application will be available at `http://localhost:8080`.
 url-shortener/
 ├── src/                  # Source files
 │   ├── components/       # Reusable components
+│   │   └── admin/        # Admin panel components
 │   ├── hooks/            # Custom React hooks
 │   ├── pages/            # Page components
 │   ├── context/          # Context providers
 │   ├── utils/            # Utility functions
+│   ├── locales/          # i18n translations
 │   ├── integrations/     # Third-party service integrations
 │   └── lib/              # Library code and helpers
 ├── public/               # Static assets
@@ -130,6 +136,50 @@ The application uses the following database tables in Supabase:
   - `ip`: Text, visitor IP address (hashed)
   - `country`: Text, visitor country based on IP
 
+- **profiles**: Stores user profiles and roles
+  - `id`: UUID, primary key, foreign key to auth.users
+  - `username`: Text, optional username
+  - `role`: Enum ('USER', 'ADMIN'), user role
+  - `is_active`: Boolean, whether user account is active
+  - `created_at`: Timestamp, when the profile was created
+
+- **notifications**: Stores user notifications
+  - `id`: UUID, primary key
+  - `user_id`: UUID, foreign key to auth.users
+  - `title`: Text, notification title
+  - `message`: Text, notification content
+  - `read`: Boolean, whether notification has been read
+  - `created_at`: Timestamp, when the notification was created
+
+- **app_settings**: Stores application settings
+  - `id`: UUID, primary key
+  - `key`: Text, setting key
+  - `value`: JSONB, setting value
+  - `updated_at`: Timestamp, when the setting was last updated
+  - `updated_by`: UUID, foreign key to auth.users
+
+## 👥 User Roles and Administration
+
+- **USER**: Can create and manage their own shortened URLs
+  - Access to personal dashboard with URL statistics
+  - Cannot access admin features
+  - Cannot see other users' data
+
+- **ADMIN**: Full system access
+  - All USER permissions
+  - Access to Admin Panel
+  - View and manage all users (enable/disable, change roles)
+  - Send notifications to users
+  - Configure application settings
+
+## 🌐 Multilingual Support
+
+The application supports multiple languages:
+- English (default)
+- Spanish
+
+Users can switch languages via the language selector in the navbar.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -154,3 +204,5 @@ Project Link: [https://github.com/your-username/url-shortener](https://github.co
 - [Supabase Documentation](https://supabase.io/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [shadcn/ui](https://ui.shadcn.com/)
+- [i18next](https://www.i18next.com/)
+

@@ -4,11 +4,23 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
+
+// Interface for user profile including role
+interface UserProfile {
+  id: string;
+  username: string | null;
+  role: 'USER' | 'ADMIN';
+  is_active: boolean;
+  created_at: string;
+}
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  profile: UserProfile | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -18,9 +30,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  // Fetch user profile from database
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setProfile(data as UserProfile);
+      setIsAdmin(data.role === 'ADMIN');
+      
+      // Check if user is active
+      if (data.is_active === false) {
+        await supabase.auth.signOut();
+        toast({
+          title: t('auth.accountDisabled'),
+          variant: 'destructive',
+        });
+        navigate('/auth');
+      }
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener
@@ -29,17 +75,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && currentSession?.user) {
+          // Use setTimeout to prevent potential deadlocks
+          setTimeout(() => {
+            fetchUserProfile(currentSession.user.id);
+          }, 0);
+          
           toast({
-            title: 'Sesión iniciada',
-            description: 'Has iniciado sesión correctamente',
+            title: t('auth.loginSuccess'),
           });
         }
         
         if (event === 'SIGNED_OUT') {
+          setProfile(null);
+          setIsAdmin(false);
           toast({
-            title: 'Sesión cerrada',
-            description: 'Has cerrado sesión correctamente',
+            title: t('common.success'),
+            description: t('auth.signOut'),
           });
         }
       }
@@ -49,13 +101,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        fetchUserProfile(currentSession.user.id);
+      }
+      
       setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [t, navigate]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -64,7 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/dashboard');
     } catch (error: any) {
       toast({
-        title: 'Error al iniciar sesión',
+        title: t('auth.loginError'),
         description: error.message,
         variant: 'destructive',
       });
@@ -74,6 +131,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     try {
+      // Check if registration is enabled
+      const { data: settingsData } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'allow_registration')
+        .single();
+      
+      if (settingsData && !settingsData.value.enabled) {
+        toast({
+          title: t('auth.registerError'),
+          description: "Registration is currently disabled",
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -83,12 +156,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       if (error) throw error;
       toast({
-        title: 'Registro exitoso',
-        description: 'Por favor revisa tu email para confirmar tu cuenta',
+        title: t('auth.accountCreated'),
+        description: t('auth.checkEmail'),
       });
     } catch (error: any) {
       toast({
-        title: 'Error en el registro',
+        title: t('auth.registerError'),
         description: error.message,
         variant: 'destructive',
       });
@@ -102,7 +175,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate('/');
     } catch (error: any) {
       toast({
-        title: 'Error al cerrar sesión',
+        title: t('common.error'),
         description: error.message,
         variant: 'destructive',
       });
@@ -112,7 +185,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     session,
     user,
+    profile,
     loading,
+    isAdmin,
     signIn,
     signUp,
     signOut
