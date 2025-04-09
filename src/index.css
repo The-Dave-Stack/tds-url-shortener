@@ -5,33 +5,34 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light mode colors based on Dave Stack */
+    --background: 195 20% 96%; /* fog-gray: #F4F7F8 */
+    --foreground: 198 77% 14%; /* petrol-blue: #093142 */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 198 77% 14%; /* petrol-blue: #093142 */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 198 77% 14%; /* petrol-blue: #093142 */
 
-    --primary: 196 100% 44%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 180 72% 35%; /* teal-deep: #199A9A */
+    --primary-foreground: 0 0% 100%; /* white: #FFFFFF */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 166 73% 47%; /* mint-green: #1EDAB4 */
+    --secondary-foreground: 198 77% 14%; /* petrol-blue: #093142 */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 195 12% 90%; /* soft-gray variant */
+    --muted-foreground: 198 19% 40%; /* petrol-blue lighter variant */
 
-    --accent: 196 70% 95%;
-    --accent-foreground: 196 100% 30%;
+    --accent: 166 73% 47%; /* mint-green: #1EDAB4 */
+    --accent-foreground: 198 77% 14%; /* petrol-blue: #093142 */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 77% 43%; /* alert-red: #C31717 */
+    --destructive-foreground: 0 0% 100%; /* white */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 196 100% 44%;
+    --border: 192 15% 90%; /* soft-gray: #DCE3E5 */
+    --input: 192 15% 90%; /* soft-gray: #DCE3E5 */
+    --ring: 180 72% 35%; /* teal-deep: #199A9A */
 
     --radius: 0.5rem;
 
@@ -46,33 +47,34 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark mode colors based on Dave Stack */
+    --background: 217 65% 15%; /* night-blue: #091E42 */
+    --foreground: 192 10% 96%; /* fog-gray: #F4F7F8 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 198 77% 14%; /* petrol-blue: #093142 */
+    --card-foreground: 192 10% 96%; /* fog-gray: #F4F7F8 */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 198 77% 14%; /* petrol-blue: #093142 */
+    --popover-foreground: 192 10% 96%; /* fog-gray: #F4F7F8 */
 
-    --primary: 196 100% 44%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 180 72% 35%; /* teal-deep: #199A9A */
+    --primary-foreground: 0 0% 100%; /* white: #FFFFFF */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 166 73% 47%; /* mint-green: #1EDAB4 */
+    --secondary-foreground: 198 77% 14%; /* petrol-blue: #093142 */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 33% 17%; /* darker variant of night-blue */
+    --muted-foreground: 215 20% 75%; /* lighter fog-gray */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 166 73% 30%; /* darker mint-green */
+    --accent-foreground: 192 10% 96%; /* fog-gray: #F4F7F8 */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%; /* darker alert-red */
+    --destructive-foreground: 192 10% 96%; /* fog-gray: #F4F7F8 */
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 196 100% 44%;
+    --border: 215 28% 17%; /* dark-blue-gray: #1D2B38 */
+    --input: 215 28% 17%; /* dark-blue-gray: #1D2B38 */
+    --ring: 166 73% 47%; /* mint-green: #1EDAB4 */
   }
 }
 
@@ -87,18 +89,38 @@
 }
 
 @layer components {
+  /* Dave Stack specific component styles */
+  .btn-primary {
+    @apply bg-teal-deep text-white hover:bg-mint-green transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent border border-teal-deep text-teal-deep hover:bg-mint-green/10 hover:border-mint-green hover:text-mint-green transition-colors;
+  }
+  
   .gradient-border {
     position: relative;
     border-radius: 0.5rem;
     background: linear-gradient(white, white) padding-box,
-                linear-gradient(to right, rgb(0, 182, 225), rgb(51, 197, 231)) border-box;
+                linear-gradient(to right, rgb(25, 154, 154), rgb(30, 218, 180)) border-box;
     border: 2px solid transparent;
     transition: all 0.3s ease;
   }
   
   .gradient-border:hover {
     background: linear-gradient(white, white) padding-box,
-                linear-gradient(to right, rgb(0, 146, 180), rgb(0, 182, 225)) border-box;
-    box-shadow: 0 4px 14px rgba(0, 182, 225, 0.15);
+                linear-gradient(to right, rgb(30, 218, 180), rgb(25, 154, 154)) border-box;
+    box-shadow: 0 4px 14px rgba(25, 154, 154, 0.15);
+  }
+
+  .dark .gradient-border {
+    background: linear-gradient(#093142, #093142) padding-box,
+                linear-gradient(to right, rgb(25, 154, 154), rgb(30, 218, 180)) border-box;
+  }
+  
+  .dark .gradient-border:hover {
+    background: linear-gradient(#093142, #093142) padding-box,
+                linear-gradient(to right, rgb(30, 218, 180), rgb(25, 154, 154)) border-box;
+    box-shadow: 0 4px 14px rgba(30, 218, 180, 0.15);
   }
 }

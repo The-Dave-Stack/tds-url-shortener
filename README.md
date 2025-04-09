@@ -1,73 +1,156 @@
-# Welcome to your Lovable project
 
-## Project info
+# URL Shortener
 
-**URL**: https://lovable.dev/projects/2e6a3e02-01a0-498f-b4d1-8f4fe278161a
+<div align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+</div>
 
-## How can I edit this code?
+<p align="center">
+  <img src="https://lovable.dev/opengraph-image-p98pqg.png" alt="URL Shortener Preview" width="600">
+</p>
 
-There are several ways of editing your application.
+A modern URL shortener application with analytics capabilities. Shorten long URLs, track click metrics, and gain insights into how your links are performing.
 
-**Use Lovable**
+## ✨ Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2e6a3e02-01a0-498f-b4d1-8f4fe278161a) and start prompting.
+- 🔗 URL shortening with custom aliases
+- 📊 Detailed analytics and tracking
+- 👤 User authentication
+- 🌓 Dark/Light theme
+- 📱 Responsive design
+- 🔒 Secure link management
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Technologies Used
 
-**Use your preferred IDE**
+- **Frontend**: React, TypeScript, TailwindCSS, shadcn/ui
+- **Backend**: Supabase (PostgreSQL, Authentication, Edge Functions)
+- **State Management**: React Query, Context API
+- **Deployment**: Docker
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 📋 Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js 16+ and npm
+- Docker and Docker Compose (for containerized deployment)
+- Supabase account for backend services
 
-Follow these steps:
+## 🚀 Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Local Development
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Clone the repository**
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+git clone https://github.com/your-username/url-shortener.git
+cd url-shortener
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+2. **Install dependencies**
+
+```bash
+npm install
+```
+
+3. **Set up environment variables**
+
+Create a `.env` file in the root directory:
+
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. **Start the development server**
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Docker Deployment
 
-**Use GitHub Codespaces**
+1. **Set up environment variables**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Create a `.env` file with your Supabase credentials:
 
-## What technologies are used for this project?
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-This project is built with:
+2. **Build and run with Docker Compose**
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+docker-compose up -d
+```
 
-## How can I deploy this project?
+The application will be available at `http://localhost:8080`.
 
-Simply open [Lovable](https://lovable.dev/projects/2e6a3e02-01a0-498f-b4d1-8f4fe278161a) and click on Share -> Publish.
+## 🗂️ Project Structure
 
-## Can I connect a custom domain to my Lovable project?
+```
+url-shortener/
+├── src/                  # Source files
+│   ├── components/       # Reusable components
+│   ├── hooks/            # Custom React hooks
+│   ├── pages/            # Page components
+│   ├── context/          # Context providers
+│   ├── utils/            # Utility functions
+│   ├── integrations/     # Third-party service integrations
+│   └── lib/              # Library code and helpers
+├── public/               # Static assets
+├── Dockerfile            # Docker configuration
+├── docker-compose.yml    # Docker Compose configuration
+├── README.md             # Project documentation
+└── package.json          # Project dependencies and scripts
+```
 
-Yes it is!
+## 📝 Database Schema
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+The application uses the following database tables in Supabase:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **urls**: Stores shortened URLs and their metadata
+  - `id`: UUID, primary key
+  - `original_url`: Text, the original long URL
+  - `short_code`: Text, auto-generated short code
+  - `custom_alias`: Text, optional user-defined alias
+  - `created_at`: Timestamp, when the URL was created
+  - `user_id`: UUID, foreign key to auth.users
+  - `clicks`: Integer, number of times the URL was accessed
+
+- **analytics**: Stores URL access analytics
+  - `id`: UUID, primary key
+  - `url_id`: UUID, foreign key to urls
+  - `timestamp`: Timestamp, when the URL was accessed
+  - `user_agent`: Text, the browser/device info
+  - `ip`: Text, visitor IP address (hashed)
+  - `country`: Text, visitor country based on IP
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📧 Contact
+
+Project Link: [https://github.com/your-username/url-shortener](https://github.com/your-username/url-shortener)
+
+## 🙏 Acknowledgements
+
+- [React Documentation](https://reactjs.org/docs/getting-started.html)
+- [Supabase Documentation](https://supabase.io/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [shadcn/ui](https://ui.shadcn.com/)

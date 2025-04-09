@@ -20,6 +20,18 @@ export default {
 		},
 		extend: {
 			colors: {
+				// Dave Stack color tokens
+				"teal-deep": "#199A9A",    // Primary
+				"mint-green": "#1EDAB4",   // Secondary
+				"petrol-blue": "#093142",  // Main text (light mode)
+				"white": "#FFFFFF",        // Inverted text
+				"fog-gray": "#F4F7F8",     // Dark mode text & light mode bg
+				"night-blue": "#091E42",   // Dark mode bg
+				"soft-gray": "#DCE3E5",    // Light mode borders
+				"dark-blue-gray": "#1D2B38", // Dark mode borders
+				"alert-red": "#C31717",    // Danger
+
+				// System tokens mapped to Dave Stack colors
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

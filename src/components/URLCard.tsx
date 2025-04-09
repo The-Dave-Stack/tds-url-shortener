@@ -1,100 +1,119 @@
 
+/**
+ * URLCard Component
+ * Displays individual shortened URL info with copy functionality and analytics link
+ */
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Copy, ExternalLink, BarChart3 } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { BarChart, Copy, ExternalLink, Trash } from "lucide-react";
+import { deleteUrl, UrlData } from "@/utils/api";
+import { formatDistanceToNow } from "date-fns";
 
-interface URLCardProps {
-  id: string;
-  originalUrl: string;
-  shortCode: string;
-  createdAt: string;
-  clicks: number;
-}
-
-const URLCard = ({ id, originalUrl, shortCode, createdAt, clicks }: URLCardProps) => {
-  const [copied, setCopied] = useState(false);
-  const shortUrl = `${window.location.origin}/${shortCode}`;
+/**
+ * URLCard displays a shortened URL with its statistics and controls
+ */
+const URLCard = ({ id, original_url, short_code, created_at, clicks, custom_alias }: UrlData) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const baseUrl = window.location.origin;
+  const shortUrl = `${baseUrl}/${custom_alias || short_code}`;
   
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(shortUrl);
-    setCopied(true);
-    toast.success("¡URL copiada al portapapeles!");
-    
-    setTimeout(() => setCopied(false), 2000);
+  // Format the creation date as relative time
+  const createdTimeAgo = formatDistanceToNow(new Date(created_at), { addSuffix: true });
+  
+  /**
+   * Copy the shortened URL to clipboard
+   */
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shortUrl);
+      setIsCopied(true);
+      toast.success("URL copied to clipboard");
+      
+      // Reset the copied state after 2 seconds
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      toast.error("Failed to copy URL");
+    }
+  };
+  
+  /**
+   * Handle URL deletion
+   */
+  const handleDelete = async () => {
+    try {
+      await deleteUrl(id);
+      toast.success("URL deleted successfully");
+      
+      // Force reload of the page to update the list
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to delete URL");
+    }
   };
 
-  // Truncate long URLs
-  const truncatedOriginalUrl = originalUrl.length > 50 
-    ? `${originalUrl.substring(0, 50)}...` 
-    : originalUrl;
-
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-gray-50 pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold">
-            {shortCode}
-          </CardTitle>
-          <span className="text-xs text-gray-500">
-            {new Date(createdAt).toLocaleDateString()}
+    <Card className="bg-white dark:bg-petrol-blue border border-soft-gray dark:border-dark-blue-gray shadow-sm overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium flex items-center justify-between">
+          <span className="truncate">{custom_alias || short_code}</span>
+          <span className="text-xs bg-fog-gray dark:bg-night-blue text-petrol-blue dark:text-fog-gray rounded-full px-2 py-1">
+            {clicks} clicks
           </span>
-        </div>
+        </CardTitle>
       </CardHeader>
       
-      <CardContent className="pt-4">
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium text-gray-500">URL Original:</p>
-            <a 
-              href={originalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-700 hover:text-brand-600 flex items-center gap-1 truncate"
-            >
-              {truncatedOriginalUrl}
-              <ExternalLink className="h-3 w-3 inline flex-shrink-0" />
-            </a>
-          </div>
-          
-          <div>
-            <p className="text-sm font-medium text-gray-500">URL Acortada:</p>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-brand-600 truncate">
-                {shortUrl}
-              </span>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-8 w-8 p-0" 
-                onClick={copyToClipboard}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          <div>
-            <p className="text-sm font-medium text-gray-500">Estadísticas:</p>
-            <p className="text-sm">
-              <span className="font-medium text-gray-900">{clicks}</span> clics totales
-            </p>
-          </div>
+      <CardContent className="pb-2">
+        <div className="mb-2">
+          <a 
+            href={original_url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm text-petrol-blue dark:text-fog-gray flex items-center hover:text-teal-deep dark:hover:text-mint-green truncate"
+          >
+            <span className="truncate">{original_url}</span>
+            <ExternalLink className="h-3 w-3 ml-1 flex-shrink-0" />
+          </a>
+        </div>
+        
+        <div className="flex items-center justify-between text-xs text-petrol-blue/80 dark:text-fog-gray/80">
+          <span>Created {createdTimeAgo}</span>
         </div>
       </CardContent>
       
-      <CardFooter className="border-t bg-gray-50 py-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto text-xs text-gray-600 hover:text-brand-600"
+      <CardFooter className="pt-2 flex justify-between">
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={copyToClipboard}
+            className="text-xs border-teal-deep text-teal-deep hover:bg-mint-green/10 hover:text-mint-green hover:border-mint-green"
+          >
+            <Copy className={`h-3 w-3 mr-1 ${isCopied ? "text-mint-green" : ""}`} />
+            {isCopied ? "Copied" : "Copy"}
+          </Button>
+          
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDelete}
+            className="text-xs border-alert-red text-alert-red hover:bg-alert-red/10"
+          >
+            <Trash className="h-3 w-3" />
+          </Button>
+        </div>
+        
+        <Button 
+          size="sm" 
           asChild
+          className="text-xs bg-teal-deep hover:bg-mint-green text-white"
         >
           <Link to={`/dashboard/${id}`}>
-            <BarChart3 className="h-4 w-4 mr-1" />
-            Ver Analítica
+            <BarChart className="h-3 w-3 mr-1" />
+            Stats
           </Link>
         </Button>
       </CardFooter>
