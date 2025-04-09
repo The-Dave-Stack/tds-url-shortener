@@ -26,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +35,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -58,7 +56,10 @@ const UsersManagement = () => {
   useEffect(() => {
     const loadUsers = async () => {
       try {
+        console.log("Loading users...");
+        setLoading(true);
         const allUsers = await getAllUsers();
+        console.log("Users loaded:", allUsers.length);
         setUsers(allUsers);
       } catch (error) {
         console.error("Error loading users:", error);
@@ -181,101 +182,109 @@ const UsersManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>
-                      {user.role === 'ADMIN' ? (
-                        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
-                          <ShieldAlert className="h-3 w-3 mr-1" />
-                          {t("admin.role")}: {user.role}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
-                          <ShieldCheck className="h-3 w-3 mr-1" />
-                          {t("admin.role")}: {user.role}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {user.is_active ? (
-                        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                          <UserCheck className="h-3 w-3 mr-1" />
-                          {t("admin.active")}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
-                          <UserX className="h-3 w-3 mr-1" />
-                          {t("admin.inactive")}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{t("admin.totalUrls")}: {user.urls_count}</div>
-                        <div>{t("admin.totalClicks")}: {user.total_clicks}</div>
-                        <div>{t("admin.lastActivity")}: {user.last_activity ? format(new Date(user.last_activity), 'PP') : '-'}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        {user.role === 'USER' ? (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => confirmAction(user, 'setAdmin')}
-                            className="text-xs"
-                          >
-                            <ShieldAlert className="h-3 w-3 mr-1" />
-                            {t("admin.setAdmin")}
-                          </Button>
-                        ) : (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => confirmAction(user, 'setUser')}
-                            className="text-xs"
-                          >
-                            <ShieldCheck className="h-3 w-3 mr-1" />
-                            {t("admin.setUser")}
-                          </Button>
-                        )}
-                        
-                        {user.is_active ? (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => confirmAction(user, 'disable')}
-                            className="text-xs border-alert-red text-alert-red hover:bg-alert-red/10"
-                          >
-                            <UserX className="h-3 w-3 mr-1" />
-                            {t("admin.disableUser")}
-                          </Button>
-                        ) : (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => confirmAction(user, 'enable')}
-                            className="text-xs"
-                          >
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            {t("admin.enableUser")}
-                          </Button>
-                        )}
-                        
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => openMessageDialog(user)}
-                          className="text-xs"
-                        >
-                          <MessageSquare className="h-3 w-3 mr-1" />
-                          {t("admin.sendMessage")}
-                        </Button>
-                      </div>
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6">
+                      {t("admin.noUsers")}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.email}</TableCell>
+                      <TableCell>
+                        {user.role === 'ADMIN' ? (
+                          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                            <ShieldAlert className="h-3 w-3 mr-1" />
+                            {t("admin.role")}: {user.role}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            {t("admin.role")}: {user.role}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.is_active ? (
+                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            {t("admin.active")}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                            <UserX className="h-3 w-3 mr-1" />
+                            {t("admin.inactive")}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{t("admin.totalUrls")}: {user.urls_count}</div>
+                          <div>{t("admin.totalClicks")}: {user.total_clicks}</div>
+                          <div>{t("admin.lastActivity")}: {user.last_activity ? format(new Date(user.last_activity), 'PP') : '-'}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          {user.role === 'USER' ? (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => confirmAction(user, 'setAdmin')}
+                              className="text-xs"
+                            >
+                              <ShieldAlert className="h-3 w-3 mr-1" />
+                              {t("admin.setAdmin")}
+                            </Button>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => confirmAction(user, 'setUser')}
+                              className="text-xs"
+                            >
+                              <ShieldCheck className="h-3 w-3 mr-1" />
+                              {t("admin.setUser")}
+                            </Button>
+                          )}
+                          
+                          {user.is_active ? (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => confirmAction(user, 'disable')}
+                              className="text-xs border-alert-red text-alert-red hover:bg-alert-red/10"
+                            >
+                              <UserX className="h-3 w-3 mr-1" />
+                              {t("admin.disableUser")}
+                            </Button>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => confirmAction(user, 'enable')}
+                              className="text-xs"
+                            >
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              {t("admin.enableUser")}
+                            </Button>
+                          )}
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => openMessageDialog(user)}
+                            className="text-xs"
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {t("admin.sendMessage")}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

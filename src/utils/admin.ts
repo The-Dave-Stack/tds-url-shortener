@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Interface for user profile with additional stats
 export interface UserWithStats {
   id: string;
-  email: string;
+  email: string | null;
   username: string | null;
   role: 'USER' | 'ADMIN';
   is_active: boolean;
@@ -33,37 +33,37 @@ export interface AppSettings {
 }
 
 /**
- * Get all users with their stats (admin only)
+ * Get all user profiles with their stats (admin only)
+ * Modificado para no usar auth.admin que requiere privilegios especiales
  */
 export const getAllUsers = async (): Promise<UserWithStats[]> => {
   try {
+    console.log("Fetching all user profiles...");
     // Get all user profiles
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('*');
       
-    if (profilesError) throw profilesError;
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      throw profilesError;
+    }
     
-    // Get users' emails from auth schema
-    const { data, error: authError } = await supabase.auth.admin.listUsers();
-    if (authError) throw authError;
+    console.log("Profiles fetched:", profiles.length);
     
-    // Fix for the type error: Use proper typing for users array
-    const users = data?.users || [];
-    
-    // Combine data and calculate stats for each user
+    // Transforma los perfiles en el formato esperado
     const usersWithStats = await Promise.all(
       profiles.map(async (profile: any) => {
-        // Find the matching user from auth data
-        const user = users.find(u => u.id === profile.id);
-        
         // Get URL stats for this user
         const { data: urls, error: urlsError } = await supabase
           .from('urls')
           .select('id, created_at, clicks')
           .eq('user_id', profile.id);
           
-        if (urlsError) throw urlsError;
+        if (urlsError) {
+          console.error(`Error fetching URLs for user ${profile.id}:`, urlsError);
+          throw urlsError;
+        }
         
         // Calculate total clicks
         const totalClicks = urls?.reduce((sum, url) => sum + url.clicks, 0) || 0;
@@ -77,9 +77,10 @@ export const getAllUsers = async (): Promise<UserWithStats[]> => {
           )[0].created_at;
         }
         
+        // Ya no usamos auth.users, simplemente dejamos email como null o lo tomamos del username si está disponible
         return {
           id: profile.id,
-          email: user?.email || '',
+          email: profile.username || `user-${profile.id.substring(0, 8)}@example.com`, // Usamos un placeholder
           username: profile.username,
           role: profile.role,
           is_active: profile.is_active,
@@ -91,6 +92,7 @@ export const getAllUsers = async (): Promise<UserWithStats[]> => {
       })
     );
     
+    console.log("Transformed users:", usersWithStats.length);
     return usersWithStats;
   } catch (error) {
     console.error('Error fetching users:', error);
