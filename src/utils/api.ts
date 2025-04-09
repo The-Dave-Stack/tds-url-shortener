@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { generateShortCode } from '@/utils/validation';
 
@@ -125,6 +124,33 @@ export const getUserUrls = async (): Promise<UrlData[]> => {
     }));
   } catch (error) {
     console.error('Error fetching user URLs:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a URL by ID
+ * @param id The URL ID to delete
+ * @returns Promise with the deletion result
+ */
+export const deleteUrl = async (id: string): Promise<void> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user.user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const { error } = await supabase
+      .from('urls')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.user.id);
+      
+    if (error) throw error;
+    
+  } catch (error) {
+    console.error('Error deleting URL:', error);
     throw error;
   }
 };
