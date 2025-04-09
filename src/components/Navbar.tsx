@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/components/ui/theme-provider";
@@ -15,24 +16,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ModeToggle";
-import { LogOut, Link as LinkIcon, LayoutDashboard } from "lucide-react";
+import { LogOut, Link as LinkIcon, LayoutDashboard, Shield } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 import { useTranslation } from 'react-i18next';
-import { Shield } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
 import NotificationsMenu from './NotificationsMenu';
 
 const Navbar = () => {
-  const { user, signOut, isAdmin } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { user, signOut, isAdmin, profile } = useAuth();
+  const { theme } = useTheme();
   const { t } = useTranslation();
   
   const [mounted, setMounted] = useState(false);
-
+  
   useEffect(() => {
+    console.log("Navbar rendered, isAdmin:", isAdmin);
+    console.log("User profile:", profile);
     setMounted(true);
-  }, []);
+  }, [isAdmin, profile]);
 
   if (!mounted) {
     return null;

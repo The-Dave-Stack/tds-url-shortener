@@ -22,7 +22,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, adminOnly = false }
     
     // Check if user is trying to access admin-only route
     if (adminOnly && user && profile && !isAdmin) {
-      toast.error("You don't have permission to access this page");
+      toast.error(t("common.unauthorized"));
     }
   }, [user, profile, isAdmin, adminOnly, t]);
 
@@ -36,6 +36,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, adminOnly = false }
   
   // Redirect non-admin users trying to access admin routes
   if (adminOnly && !isAdmin) {
+    console.log("Not an admin, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   

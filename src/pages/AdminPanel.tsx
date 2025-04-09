@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -8,11 +8,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UsersManagement from "@/components/admin/UsersManagement";
 import AppSettings from "@/components/admin/AppSettings";
 import { Users, Settings } from "lucide-react";
+import { toast } from "sonner";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<"users" | "settings">("users");
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, profile, loading } = useAuth();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    // Add additional check to verify admin status
+    console.log("Admin panel loaded, isAdmin:", isAdmin);
+    console.log("User profile:", profile);
+    
+    if (!isAdmin && !loading) {
+      toast.error(t("common.unauthorized"));
+    }
+  }, [isAdmin, profile, loading, t]);
 
   // Show loading while checking auth status
   if (loading) {
@@ -21,6 +32,7 @@ const AdminPanel = () => {
 
   // Redirect to dashboard if user is not an admin
   if (!isAdmin) {
+    console.log("Not an admin, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 

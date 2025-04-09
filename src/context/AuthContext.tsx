@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Fetch user profile from database
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -50,18 +51,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error fetching user profile:', error);
         return;
       }
-
-      setProfile(data as UserProfile);
-      setIsAdmin(data.role === 'ADMIN');
       
-      // Check if user is active
-      if (data.is_active === false) {
-        await supabase.auth.signOut();
-        toast({
-          title: t('auth.accountDisabled'),
-          variant: 'destructive',
-        });
-        navigate('/auth');
+      console.log('Profile fetched:', data);
+      
+      if (data) {
+        setProfile(data as UserProfile);
+        setIsAdmin(data.role === 'ADMIN');
+        
+        // Check if user is active
+        if (data.is_active === false) {
+          await supabase.auth.signOut();
+          toast({
+            title: t('auth.accountDisabled'),
+            variant: 'destructive',
+          });
+          navigate('/auth');
+        }
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
