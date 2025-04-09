@@ -15,6 +15,7 @@ export interface Notification {
  */
 export const getUserNotifications = async (): Promise<Notification[]> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
@@ -22,7 +23,7 @@ export const getUserNotifications = async (): Promise<Notification[]> => {
       
     if (error) throw error;
     
-    return data || [];
+    return (data as Notification[]) || [];
   } catch (error) {
     console.error('Error fetching notifications:', error);
     throw error;
@@ -34,6 +35,7 @@ export const getUserNotifications = async (): Promise<Notification[]> => {
  */
 export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -51,6 +53,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
  */
 export const markAllNotificationsAsRead = async (): Promise<void> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })

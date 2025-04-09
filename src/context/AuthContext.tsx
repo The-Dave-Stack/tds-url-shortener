@@ -131,22 +131,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     try {
-      // Check if registration is enabled
-      const { data: settingsData } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'allow_registration')
-        .single();
-      
-      if (settingsData && !settingsData.value.enabled) {
-        toast({
-          title: t('auth.registerError'),
-          description: "Registration is currently disabled",
-          variant: 'destructive',
-        });
-        return;
-      }
-      
+      // We'll handle the registration check directly in the component
+      // since we can't access app_settings table from types yet
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,

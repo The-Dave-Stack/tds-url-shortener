@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
+import { useTranslation } from 'react-i18next';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const { t } = useTranslation();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,16 +45,16 @@ const Auth = () => {
           >
             <CardHeader>
               <CardTitle className="text-2xl text-center">
-                {activeTab === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
+                {activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
               </CardTitle>
               <CardDescription className="text-center">
                 {activeTab === 'login' 
-                  ? 'Ingresa tus credenciales para acceder' 
-                  : 'Crea una cuenta nueva para comenzar'}
+                  ? t('auth.signIn') 
+                  : t('auth.signUp')}
               </CardDescription>
               <TabsList className="grid w-full grid-cols-2 mt-4">
-                <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="signup">Registrarse</TabsTrigger>
+                <TabsTrigger value="login">{t('auth.signIn')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>
               </TabsList>
             </CardHeader>
             
@@ -60,7 +62,7 @@ const Auth = () => {
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <label htmlFor="email" className="text-sm font-medium">
-                    Email
+                    {t('auth.email')}
                   </label>
                   <Input
                     id="email"
@@ -74,7 +76,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="password" className="text-sm font-medium">
-                    Contraseña
+                    {t('auth.password')}
                   </label>
                   <Input
                     id="password"
@@ -94,11 +96,11 @@ const Auth = () => {
                   className="w-full bg-brand-500 hover:bg-brand-600"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Procesando...' : activeTab === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
+                  {isLoading ? t('common.loading') : activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
                 </Button>
                 <div className="text-center text-sm">
                   <Link to="/" className="text-brand-500 hover:underline">
-                    Volver a la página principal
+                    {t('common.back')}
                   </Link>
                 </div>
               </CardFooter>

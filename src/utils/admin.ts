@@ -50,7 +50,7 @@ export const getAllUsers = async (): Promise<UserWithStats[]> => {
     
     // Combine data and calculate stats for each user
     const usersWithStats = await Promise.all(
-      profiles.map(async (profile) => {
+      profiles.map(async (profile: any) => {
         const user = users.find(u => u.id === profile.id);
         
         // Get URL stats for this user
@@ -99,6 +99,7 @@ export const getAllUsers = async (): Promise<UserWithStats[]> => {
  */
 export const updateUserRole = async (userId: string, role: 'USER' | 'ADMIN'): Promise<void> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { error } = await supabase
       .from('profiles')
       .update({ role })
@@ -116,6 +117,7 @@ export const updateUserRole = async (userId: string, role: 'USER' | 'ADMIN'): Pr
  */
 export const updateUserActiveStatus = async (userId: string, isActive: boolean): Promise<void> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { error } = await supabase
       .from('profiles')
       .update({ is_active: isActive })
@@ -133,6 +135,7 @@ export const updateUserActiveStatus = async (userId: string, isActive: boolean):
  */
 export const sendNotification = async (userId: string, title: string, message: string): Promise<void> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { error } = await supabase
       .from('notifications')
       .insert([{ user_id: userId, title, message }]);
@@ -149,13 +152,14 @@ export const sendNotification = async (userId: string, title: string, message: s
  */
 export const getAppSettings = async (): Promise<AppSettings[]> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { data, error } = await supabase
       .from('app_settings')
       .select('*');
       
     if (error) throw error;
     
-    return data || [];
+    return (data as AppSettings[]) || [];
   } catch (error) {
     console.error('Error fetching app settings:', error);
     throw error;
@@ -167,6 +171,7 @@ export const getAppSettings = async (): Promise<AppSettings[]> => {
  */
 export const updateAppSettings = async (key: string, value: any, userId: string): Promise<void> => {
   try {
+    // Realizamos la consulta directamente para evitar errores de tipo
     const { error } = await supabase
       .from('app_settings')
       .update({ value, updated_at: new Date().toISOString(), updated_by: userId })
