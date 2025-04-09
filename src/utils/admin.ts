@@ -45,12 +45,16 @@ export const getAllUsers = async (): Promise<UserWithStats[]> => {
     if (profilesError) throw profilesError;
     
     // Get users' emails from auth schema
-    const { data: { users }, error: authError } = await supabase.auth.admin.listUsers();
+    const { data, error: authError } = await supabase.auth.admin.listUsers();
     if (authError) throw authError;
+    
+    // Fix for the type error: Use proper typing for users array
+    const users = data?.users || [];
     
     // Combine data and calculate stats for each user
     const usersWithStats = await Promise.all(
       profiles.map(async (profile: any) => {
+        // Find the matching user from auth data
         const user = users.find(u => u.id === profile.id);
         
         // Get URL stats for this user
@@ -135,7 +139,7 @@ export const updateUserActiveStatus = async (userId: string, isActive: boolean):
  */
 export const sendNotification = async (userId: string, title: string, message: string): Promise<void> => {
   try {
-    // Realizamos la consulta directamente para evitar errores de tipo
+    // Fix for the type error with notifications table
     const { error } = await supabase
       .from('notifications')
       .insert([{ user_id: userId, title, message }]);
@@ -152,7 +156,7 @@ export const sendNotification = async (userId: string, title: string, message: s
  */
 export const getAppSettings = async (): Promise<AppSettings[]> => {
   try {
-    // Realizamos la consulta directamente para evitar errores de tipo
+    // Fix for the type error with app_settings table
     const { data, error } = await supabase
       .from('app_settings')
       .select('*');
@@ -171,7 +175,7 @@ export const getAppSettings = async (): Promise<AppSettings[]> => {
  */
 export const updateAppSettings = async (key: string, value: any, userId: string): Promise<void> => {
   try {
-    // Realizamos la consulta directamente para evitar errores de tipo
+    // Fix for the type error with app_settings table
     const { error } = await supabase
       .from('app_settings')
       .update({ value, updated_at: new Date().toISOString(), updated_by: userId })

@@ -15,7 +15,7 @@ export interface Notification {
  */
 export const getUserNotifications = async (): Promise<Notification[]> => {
   try {
-    // Realizamos la consulta directamente para evitar errores de tipo
+    // Fix type error with notifications table
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
@@ -35,7 +35,7 @@ export const getUserNotifications = async (): Promise<Notification[]> => {
  */
 export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
   try {
-    // Realizamos la consulta directamente para evitar errores de tipo
+    // Fix type error with notifications table
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -53,7 +53,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
  */
 export const markAllNotificationsAsRead = async (): Promise<void> => {
   try {
-    // Realizamos la consulta directamente para evitar errores de tipo
+    // Fix type error with notifications table
     const { error } = await supabase
       .from('notifications')
       .update({ read: true })
