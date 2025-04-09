@@ -57,7 +57,7 @@ const App = () => (
               <Route 
                 path="/admin" 
                 element={
-                  <RequireAuth>
+                  <RequireAuth adminOnly={true}>
                     <AdminPanel />
                   </RequireAuth>
                 } 

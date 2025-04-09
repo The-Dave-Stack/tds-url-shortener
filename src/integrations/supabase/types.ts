@@ -157,6 +157,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
       increment_clicks: {
         Args: { url_id: string }
         Returns: undefined

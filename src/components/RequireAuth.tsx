@@ -15,6 +15,12 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, adminOnly = false }
   const { t } = useTranslation();
 
   useEffect(() => {
+    // Log authentication status for debugging
+    console.log("RequireAuth - User:", !!user);
+    console.log("RequireAuth - Profile:", profile);
+    console.log("RequireAuth - IsAdmin:", isAdmin);
+    console.log("RequireAuth - AdminOnly:", adminOnly);
+    
     // Check if the user account is disabled
     if (user && profile && !profile.is_active) {
       toast.error(t("auth.accountDisabled"));
