@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { checkRegistrationAllowed } from '@/utils/auth-utils';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -23,27 +25,12 @@ const Auth = () => {
   useEffect(() => {
     const checkRegistrationStatus = async () => {
       try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'allow_registration')
-          .single();
-
-        if (error) {
-          console.error('Error checking registration status:', error);
-          return;
-        }
-
-        if (data && data.value) {
-          console.log('Registration status data:', data.value);
-          const settingValue = data.value;
-          if (typeof settingValue === 'object' && settingValue !== null && 'enabled' in settingValue) {
-            console.log('Registration enabled:', Boolean(settingValue.enabled));
-            setRegistrationEnabled(Boolean(settingValue.enabled));
-          } else {
-            console.log('Registration setting has unexpected format, defaulting to enabled');
-            setRegistrationEnabled(true);
-          }
+        const isAllowed = await checkRegistrationAllowed(t);
+        setRegistrationEnabled(isAllowed);
+        
+        // If registration is disabled and active tab is signup, switch to login
+        if (!isAllowed && activeTab === 'signup') {
+          setActiveTab('login');
         }
       } catch (error) {
         console.error('Error in checkRegistrationStatus:', error);
@@ -51,7 +38,7 @@ const Auth = () => {
     };
 
     checkRegistrationStatus();
-  }, []);
+  }, [activeTab, t]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,88 +64,144 @@ const Auth = () => {
     <Layout>
       <div className="flex items-center justify-center min-h-[70vh]">
         <Card className="w-full max-w-md">
-          <Tabs
-            defaultValue={activeTab}
-            onValueChange={(value) => setActiveTab(value as "login" | "signup")}
-            className="w-full"
-          >
-            <CardHeader>
-              <CardTitle className="text-2xl text-center">
-                {activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
-              </CardTitle>
-              <CardDescription className="text-center">
-                {activeTab === 'login' 
-                  ? t('auth.signIn') 
-                  : t('auth.signUp')}
-              </CardDescription>
-              <TabsList className="grid w-full grid-cols-2 mt-4">
-                <TabsTrigger value="login">{t('auth.signIn')}</TabsTrigger>
-                <TabsTrigger 
-                  value="signup"
-                  disabled={!registrationEnabled}
-                >
-                  {t('auth.signUp')}
-                </TabsTrigger>
-              </TabsList>
+          {registrationEnabled ? (
+            // Show tabs only if registration is enabled
+            <Tabs
+              defaultValue={activeTab}
+              onValueChange={(value) => setActiveTab(value as "login" | "signup")}
+              className="w-full"
+            >
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">
+                  {activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
+                </CardTitle>
+                <CardDescription className="text-center">
+                  {activeTab === 'login' 
+                    ? t('auth.signIn') 
+                    : t('auth.signUp')}
+                </CardDescription>
+                <TabsList className="grid w-full grid-cols-2 mt-4">
+                  <TabsTrigger value="login">{t('auth.signIn')}</TabsTrigger>
+                  <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>
+                </TabsList>
+              </CardHeader>
               
-              {!registrationEnabled && activeTab === 'signup' && (
+              <form onSubmit={handleAuth}>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      {t('auth.email')}
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium">
+                      {t('auth.password')}
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="flex flex-col gap-4">
+                  <Button
+                    type="submit"
+                    className="w-full bg-brand-500 hover:bg-brand-600"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? t('common.loading') : activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
+                  </Button>
+                  <div className="text-center text-sm">
+                    <Link to="/" className="text-brand-500 hover:underline">
+                      {t('common.back')}
+                    </Link>
+                  </div>
+                </CardFooter>
+              </form>
+            </Tabs>
+          ) : (
+            // Only show login form if registration is disabled
+            <>
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">
+                  {t('auth.signIn')}
+                </CardTitle>
+                <CardDescription className="text-center">
+                  {t('auth.signIn')}
+                </CardDescription>
+                
                 <Alert variant="destructive" className="mt-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     {t('auth.registrationDisabled')}
                   </AlertDescription>
                 </Alert>
-              )}
-            </CardHeader>
-            
-            <form onSubmit={handleAuth}>
-              <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    {t('auth.email')}
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading || (activeTab === 'signup' && !registrationEnabled)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    {t('auth.password')}
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading || (activeTab === 'signup' && !registrationEnabled)}
-                  />
-                </div>
-              </CardContent>
+              </CardHeader>
               
-              <CardFooter className="flex flex-col gap-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-brand-500 hover:bg-brand-600"
-                  disabled={isLoading || (activeTab === 'signup' && !registrationEnabled)}
-                >
-                  {isLoading ? t('common.loading') : activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
-                </Button>
-                <div className="text-center text-sm">
-                  <Link to="/" className="text-brand-500 hover:underline">
-                    {t('common.back')}
-                  </Link>
-                </div>
-              </CardFooter>
-            </form>
-          </Tabs>
+              <form onSubmit={handleAuth}>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      {t('auth.email')}
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium">
+                      {t('auth.password')}
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="flex flex-col gap-4">
+                  <Button
+                    type="submit"
+                    className="w-full bg-brand-500 hover:bg-brand-600"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? t('common.loading') : t('auth.signIn')}
+                  </Button>
+                  <div className="text-center text-sm">
+                    <Link to="/" className="text-brand-500 hover:underline">
+                      {t('common.back')}
+                    </Link>
+                  </div>
+                </CardFooter>
+              </form>
+            </>
+          )}
         </Card>
       </div>
     </Layout>
