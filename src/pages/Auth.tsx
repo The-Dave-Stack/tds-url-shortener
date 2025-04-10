@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,6 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const { t } = useTranslation();
 
-  // Check if registration is enabled
   useEffect(() => {
     const checkRegistrationStatus = async () => {
       try {
@@ -37,8 +35,15 @@ const Auth = () => {
         }
 
         if (data && data.value) {
-          console.log('Registration status:', data.value.enabled);
-          setRegistrationEnabled(data.value.enabled === true);
+          console.log('Registration status data:', data.value);
+          const settingValue = data.value;
+          if (typeof settingValue === 'object' && settingValue !== null && 'enabled' in settingValue) {
+            console.log('Registration enabled:', Boolean(settingValue.enabled));
+            setRegistrationEnabled(Boolean(settingValue.enabled));
+          } else {
+            console.log('Registration setting has unexpected format, defaulting to enabled');
+            setRegistrationEnabled(true);
+          }
         }
       } catch (error) {
         console.error('Error in checkRegistrationStatus:', error);

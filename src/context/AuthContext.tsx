@@ -146,13 +146,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (settingsError) {
         console.error('Error checking registration settings:', settingsError);
         // Default to allowing registration if we can't check the setting
-      } else if (appSettings && appSettings.value && appSettings.value.enabled === false) {
-        toast({
-          title: t('auth.registerError'),
-          description: t('auth.registrationDisabled'),
-          variant: 'destructive',
-        });
-        return;
+      } else if (appSettings && appSettings.value) {
+        // Safely check if registration is disabled
+        const settingValue = appSettings.value;
+        const isRegistrationEnabled = typeof settingValue === 'object' && 
+          settingValue !== null && 
+          'enabled' in settingValue ? 
+          Boolean(settingValue.enabled) : true;
+        
+        if (!isRegistrationEnabled) {
+          toast({
+            title: t('auth.registerError'),
+            description: t('auth.registrationDisabled'),
+            variant: 'destructive',
+          });
+          return;
+        }
       }
 
       // Registration is allowed, proceed with sign up

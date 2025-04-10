@@ -39,13 +39,24 @@ const AppSettings = () => {
         const registrationSetting = appSettings.find(s => s.key === 'allow_registration');
         if (registrationSetting) {
           console.log("Registration setting found:", registrationSetting);
-          setRegistrationEnabled(registrationSetting.value.enabled === true);
+          // Safely check if the value has an enabled property
+          const settingValue = registrationSetting.value;
+          if (typeof settingValue === 'object' && settingValue !== null && 'enabled' in settingValue) {
+            setRegistrationEnabled(Boolean(settingValue.enabled));
+          }
         }
         
         const connectionSetting = appSettings.find(s => s.key === 'connection_settings');
         if (connectionSetting) {
-          setTimeout(connectionSetting.value.timeout);
-          setMaxConnections(connectionSetting.value.max_connections);
+          const settingValue = connectionSetting.value;
+          if (typeof settingValue === 'object' && settingValue !== null) {
+            if ('timeout' in settingValue && typeof settingValue.timeout === 'number') {
+              setTimeout(settingValue.timeout);
+            }
+            if ('max_connections' in settingValue && typeof settingValue.max_connections === 'number') {
+              setMaxConnections(settingValue.max_connections);
+            }
+          }
         }
       } catch (error) {
         console.error("Error loading settings:", error);
