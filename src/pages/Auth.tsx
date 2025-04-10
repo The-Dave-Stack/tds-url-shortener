@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +8,45 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const { signIn, signUp } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const { t } = useTranslation();
+
+  // Check if registration is enabled
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'allow_registration')
+          .single();
+
+        if (error) {
+          console.error('Error checking registration status:', error);
+          return;
+        }
+
+        if (data && data.value) {
+          console.log('Registration status:', data.value.enabled);
+          setRegistrationEnabled(data.value.enabled === true);
+        }
+      } catch (error) {
+        console.error('Error in checkRegistrationStatus:', error);
+      }
+    };
+
+    checkRegistrationStatus();
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +56,9 @@ const Auth = () => {
       if (activeTab === 'login') {
         await signIn(email, password);
       } else {
+        if (!registrationEnabled) {
+          throw new Error(t('auth.registrationDisabled'));
+        }
         await signUp(email, password);
       }
     } catch (error) {
@@ -54,8 +88,22 @@ const Auth = () => {
               </CardDescription>
               <TabsList className="grid w-full grid-cols-2 mt-4">
                 <TabsTrigger value="login">{t('auth.signIn')}</TabsTrigger>
-                <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>
+                <TabsTrigger 
+                  value="signup"
+                  disabled={!registrationEnabled}
+                >
+                  {t('auth.signUp')}
+                </TabsTrigger>
               </TabsList>
+              
+              {!registrationEnabled && activeTab === 'signup' && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {t('auth.registrationDisabled')}
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardHeader>
             
             <form onSubmit={handleAuth}>
@@ -71,7 +119,7 @@ const Auth = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
+                    disabled={isLoading || (activeTab === 'signup' && !registrationEnabled)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -85,7 +133,7 @@ const Auth = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
+                    disabled={isLoading || (activeTab === 'signup' && !registrationEnabled)}
                   />
                 </div>
               </CardContent>
@@ -94,7 +142,7 @@ const Auth = () => {
                 <Button
                   type="submit"
                   className="w-full bg-brand-500 hover:bg-brand-600"
-                  disabled={isLoading}
+                  disabled={isLoading || (activeTab === 'signup' && !registrationEnabled)}
                 >
                   {isLoading ? t('common.loading') : activeTab === 'login' ? t('auth.signIn') : t('auth.signUp')}
                 </Button>

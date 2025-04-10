@@ -136,8 +136,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     try {
-      // We'll handle the registration check directly in the component
-      // since we can't access app_settings table from types yet
+      // Check if registration is allowed
+      const { data: appSettings, error: settingsError } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'allow_registration')
+        .single();
+      
+      if (settingsError) {
+        console.error('Error checking registration settings:', settingsError);
+        // Default to allowing registration if we can't check the setting
+      } else if (appSettings && appSettings.value && appSettings.value.enabled === false) {
+        toast({
+          title: t('auth.registerError'),
+          description: t('auth.registrationDisabled'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Registration is allowed, proceed with sign up
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,

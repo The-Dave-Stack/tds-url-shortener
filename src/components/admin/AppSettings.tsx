@@ -30,13 +30,16 @@ const AppSettings = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        console.log("Loading app settings...");
         const appSettings = await getAppSettings();
+        console.log("App settings loaded:", appSettings);
         setSettings(appSettings);
         
         // Initialize form values from settings
         const registrationSetting = appSettings.find(s => s.key === 'allow_registration');
         if (registrationSetting) {
-          setRegistrationEnabled(registrationSetting.value.enabled);
+          console.log("Registration setting found:", registrationSetting);
+          setRegistrationEnabled(registrationSetting.value.enabled === true);
         }
         
         const connectionSetting = appSettings.find(s => s.key === 'connection_settings');
@@ -60,6 +63,7 @@ const AppSettings = () => {
     if (!user) return;
     
     try {
+      console.log("Toggling registration:", !registrationEnabled);
       const newValue = {
         enabled: !registrationEnabled
       };
