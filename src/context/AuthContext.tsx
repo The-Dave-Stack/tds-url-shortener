@@ -1,77 +1,30 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-
-// Interface for user profile including role
-interface UserProfile {
-  id: string;
-  username: string | null;
-  role: 'USER' | 'ADMIN';
-  is_active: boolean;
-  created_at: string;
-}
-
-interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: UserProfile | null;
-  loading: boolean;
-  isAdmin: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-}
+import { AuthContextType } from '@/types/auth';
+import { useAuthentication } from '@/hooks/use-authentication';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const navigate = useNavigate();
+  const { 
+    user, 
+    setUser, 
+    profile, 
+    session, 
+    setSession, 
+    loading, 
+    setLoading, 
+    isAdmin, 
+    signIn, 
+    signUp, 
+    signOut,
+    fetchUserProfile 
+  } = useAuthentication();
+  
   const { t } = useTranslation();
-
-  // Fetch user profile from database
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log('Fetching profile for user:', userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return;
-      }
-      
-      console.log('Profile fetched:', data);
-      
-      if (data) {
-        setProfile(data as UserProfile);
-        setIsAdmin(data.role === 'ADMIN');
-        
-        // Check if user is active
-        if (data.is_active === false) {
-          await supabase.auth.signOut();
-          toast({
-            title: t('auth.accountDisabled'),
-            variant: 'destructive',
-          });
-          navigate('/auth');
-        }
-      }
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-    }
-  };
 
   useEffect(() => {
     // Set up auth state listener
@@ -92,8 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (event === 'SIGNED_OUT') {
-          setProfile(null);
-          setIsAdmin(false);
           toast({
             title: t('common.success'),
             description: t('auth.signOut'),
@@ -117,90 +68,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [t, navigate]);
+  }, [t]);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      navigate('/dashboard');
-    } catch (error: any) {
-      toast({
-        title: t('auth.loginError'),
-        description: error.message,
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const signUp = async (email: string, password: string) => {
-    try {
-      // Check if registration is allowed
-      const { data: appSettings, error: settingsError } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'allow_registration')
-        .single();
-      
-      if (settingsError) {
-        console.error('Error checking registration settings:', settingsError);
-        // Default to allowing registration if we can't check the setting
-      } else if (appSettings && appSettings.value) {
-        // Safely check if registration is disabled
-        const settingValue = appSettings.value;
-        const isRegistrationEnabled = typeof settingValue === 'object' && 
-          settingValue !== null && 
-          'enabled' in settingValue ? 
-          Boolean(settingValue.enabled) : true;
-        
-        if (!isRegistrationEnabled) {
-          toast({
-            title: t('auth.registerError'),
-            description: t('auth.registrationDisabled'),
-            variant: 'destructive',
-          });
-          return;
-        }
-      }
-
-      // Registration is allowed, proceed with sign up
-      const { error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          emailRedirectTo: window.location.origin + '/dashboard'
-        }
-      });
-      if (error) throw error;
-      toast({
-        title: t('auth.accountCreated'),
-        description: t('auth.checkEmail'),
-      });
-    } catch (error: any) {
-      toast({
-        title: t('auth.registerError'),
-        description: error.message,
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: t('common.error'),
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const value = {
+  const value: AuthContextType = {
     session,
     user,
     profile,
