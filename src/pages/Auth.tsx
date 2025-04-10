@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { checkRegistrationAllowed } from '@/utils/auth-utils';
@@ -17,9 +15,9 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [registrationEnabled, setRegistrationEnabled] = useState(false); // Default to false
   const { signIn, signUp } = useAuth();
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [activeTab, setActiveTab] = useState<"login">("login"); // Only login by default
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -28,8 +26,8 @@ const Auth = () => {
         const isAllowed = await checkRegistrationAllowed(t);
         setRegistrationEnabled(isAllowed);
         
-        // If registration is disabled and active tab is signup, switch to login
-        if (!isAllowed && activeTab === 'signup') {
+        // If registration is not enabled, ensure we're on login tab
+        if (!isAllowed) {
           setActiveTab('login');
         }
       } catch (error) {
@@ -38,21 +36,15 @@ const Auth = () => {
     };
 
     checkRegistrationStatus();
-  }, [activeTab, t]);
+  }, [t]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      if (activeTab === 'login') {
-        await signIn(email, password);
-      } else {
-        if (!registrationEnabled) {
-          throw new Error(t('auth.registrationDisabled'));
-        }
-        await signUp(email, password);
-      }
+      // Only allow login when registration is disabled
+      await signIn(email, password);
     } catch (error) {
       console.error('Error de autenticación:', error);
     } finally {
@@ -65,7 +57,6 @@ const Auth = () => {
       <div className="flex items-center justify-center min-h-[70vh]">
         <Card className="w-full max-w-md">
           {registrationEnabled ? (
-            // Show tabs only if registration is enabled
             <Tabs
               defaultValue={activeTab}
               onValueChange={(value) => setActiveTab(value as "login" | "signup")}
