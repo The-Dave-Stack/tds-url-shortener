@@ -6,48 +6,29 @@ interface ClicksChartProps {
   data: { date: string; clicks: number; }[];
 }
 
-// Mock data for the chart
-const generateLastWeekData = () => {
-  const data = [];
-  const today = new Date();
-  
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(today.getDate() - i);
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      clicks: Math.floor(Math.random() * 50) + 1, // Random number between 1-50
-    });
-  }
-  
-  return data;
-};
-
-const generateLastMonthData = () => {
-  const data = [];
-  const today = new Date();
-  
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(today.getDate() - i);
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      clicks: Math.floor(Math.random() * 50) + 1, // Random number between 1-50
-    });
-  }
-  
-  return data;
-};
-
-const dataMap = {
-  "7d": generateLastWeekData(),
-  "30d": generateLastMonthData()
-};
-
 const ClicksChart = ({ data }: ClicksChartProps) => {
   const [timeRange, setTimeRange] = useState<"7d" | "30d">("7d");
+  
+  // Filter data based on selected time range
+  const filteredData = () => {
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    const today = new Date();
+    const dateLimit = new Date();
+    
+    if (timeRange === "7d") {
+      dateLimit.setDate(today.getDate() - 7);
+    } else {
+      dateLimit.setDate(today.getDate() - 30);
+    }
+    
+    return data.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= dateLimit && itemDate <= today;
+    });
+  };
   
   return (
     <div className="w-full h-full flex flex-col">
@@ -82,7 +63,7 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
       </div>
       <div className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data || dataMap[timeRange]} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+          <LineChart data={filteredData()} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
             <XAxis 
               dataKey="date" 

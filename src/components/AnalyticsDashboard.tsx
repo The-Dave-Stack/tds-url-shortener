@@ -79,7 +79,6 @@ const AnalyticsDashboard = ({ data }: AnalyticsDashboardProps) => {
           
           <Separator className="my-4" />
           
-          {/* Agregado div contenedor con mayor espacio entre los elementos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Daily Clicks Chart Card */}
             <div className="flex flex-col h-[400px]">
@@ -132,6 +131,11 @@ const AnalyticsDashboard = ({ data }: AnalyticsDashboardProps) => {
                             <span className="font-medium text-petrol-blue dark:text-fog-gray">
                               {visit.country}
                             </span>
+                            {visit.region && visit.city && (
+                              <span className="ml-1 text-petrol-blue/70 dark:text-fog-gray/70 text-sm">
+                                ({visit.city}, {visit.region})
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center text-sm text-petrol-blue/70 dark:text-fog-gray/70">
                             <Clock className="h-3 w-3 mr-1" />

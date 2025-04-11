@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
         value
       })).sort((a, b) => b.value - a.value)
       
-      // Formatear visitas recientes
+      // Formatear visitas recientes con información completa de geolocalización
       const recentVisits = analyticsArray.slice(0, 10).map(visit => ({
         id: visit.id,
         timestamp: visit.timestamp,

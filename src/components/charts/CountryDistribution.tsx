@@ -52,16 +52,6 @@ const countryCoordinates: Record<string, [number, number]> = {
   "Cuba": [23.1136, -82.3666],
 };
 
-// Mock data for countries
-const mockData: CountryData[] = [
-  { name: "España", value: 135, color: "#00b6e1" },
-  { name: "México", value: 87, color: "#33c5e7" },
-  { name: "Argentina", value: 45, color: "#66d3ed" },
-  { name: "Colombia", value: 32, color: "#99e2f3" },
-  { name: "Chile", value: 28, color: "#ccf0f9" },
-  { name: "Otros", value: 15, color: "#e6f8fc" }
-];
-
 // Generate colors for the chart
 const generateColors = (count: number) => {
   const baseColor = "#00b6e1";
@@ -76,7 +66,8 @@ const generateColors = (count: number) => {
 };
 
 const CountryDistribution = ({ data }: CountryDistributionProps) => {
-  const countryData = data && data.length > 0 ? data : mockData;
+  // We don't use mock data anymore - we always use the data provided from props
+  const countryData = data && data.length > 0 ? data : [];
   const colors = generateColors(countryData.length);
   const [activeView, setActiveView] = useState<"chart" | "map">("chart");
   
@@ -99,38 +90,44 @@ const CountryDistribution = ({ data }: CountryDistributionProps) => {
           
           <div className="flex-1">
             <TabsContent value="chart" className="h-full m-0 p-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={countryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {countryData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.color || colors[index % colors.length]} 
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value, name) => [`${value} visitas`, name]}
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      borderRadius: '6px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                      border: '1px solid #e5e7eb'
-                    }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} />
-                </PieChart>
-              </ResponsiveContainer>
+              {countryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={countryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={70}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {countryData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color || colors[index % colors.length]} 
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name) => [`${value} visitas`, name]}
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        borderRadius: '6px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                        border: '1px solid #e5e7eb'
+                      }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500">
+                  No hay datos de países disponibles
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="map" className="h-full m-0 p-0">

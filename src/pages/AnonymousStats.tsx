@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { getUserUrls, deleteUrl, UrlData, getUrlAnalytics } from "@/utils/api";
 import Layout from "@/components/Layout";
@@ -9,6 +10,7 @@ import { Loader2, ExternalLink, Trash2, BarChart } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import { UrlAnalytics } from "@/utils/api-types";
 
 /**
  * AnonymousStats Component
@@ -18,7 +20,7 @@ const AnonymousStats = () => {
   const [urls, setUrls] = useState<UrlData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUrlId, setSelectedUrlId] = useState<string | null>(null);
-  const [analytics, setAnalytics] = useState<any | null>(null);
+  const [analytics, setAnalytics] = useState<UrlAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Fetch URLs for anonymous user

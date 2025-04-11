@@ -78,6 +78,8 @@ export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
         id: visit.id,
         timestamp: visit.timestamp,
         country: visit.country ? getFullCountryName(visit.country) : 'Unknown',
+        region: visit.region || null,
+        city: visit.city || null,
         userAgent: visit.user_agent || 'Unknown',
         ip: visit.ip
       });

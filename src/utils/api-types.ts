@@ -42,6 +42,8 @@ export interface Visit {
   id: string;
   timestamp: string;
   country: string;
+  region?: string | null;
+  city?: string | null;
   userAgent: string;
   ip?: string;
 }
