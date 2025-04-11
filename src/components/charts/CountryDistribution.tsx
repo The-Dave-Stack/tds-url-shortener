@@ -2,12 +2,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
+// Define the type for country data
+interface CountryData {
+  name: string;
+  value: number;
+  color?: string;  // Make color optional since it's not always provided
+}
+
 interface CountryDistributionProps {
-  data: { name: string; value: number; }[];
+  data: CountryData[];
 }
 
 // Mock data for countries
-const mockData = [
+const mockData: CountryData[] = [
   { name: "España", value: 135, color: "#00b6e1" },
   { name: "México", value: 87, color: "#33c5e7" },
   { name: "Argentina", value: 45, color: "#66d3ed" },
