@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getUserUrls, deleteUrl, UrlData, getUrlAnalytics } from "@/utils/api";
 import Layout from "@/components/Layout";
@@ -195,9 +194,7 @@ const AnonymousStats = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-teal-deep" />
               </div>
             ) : (
-              <AnalyticsDashboard 
-                data={analytics}
-              />
+              <AnalyticsDashboard data={analytics} />
             )}
           </div>
         )}

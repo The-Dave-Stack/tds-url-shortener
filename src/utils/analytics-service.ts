@@ -1,0 +1,109 @@
+
+import { supabase } from '@/integrations/supabase/client';
+import { getClientId } from '@/utils/anonymous-client';
+import { UrlAnalytics, Visit } from './api-types';
+
+/**
+ * Get analytics for a specific URL
+ * @param id The URL ID
+ * @returns Promise with the URL analytics data
+ */
+export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    let urlData;
+    let isAnonymous = false;
+    
+    if (user.user) {
+      // Get URL data for authenticated user
+      const { data, error } = await supabase
+        .from('urls')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      urlData = data;
+    } else {
+      // Get URL data for anonymous user
+      const clientId = getClientId();
+      
+      const { data, error } = await supabase
+        .from('anonymous_urls')
+        .select('*')
+        .eq('id', id)
+        .eq('client_id', clientId)
+        .single();
+        
+      if (error) throw error;
+      urlData = data;
+      isAnonymous = true;
+    }
+    
+    if (!urlData) {
+      throw new Error('URL no encontrada');
+    }
+    
+    // Get analytics data
+    const { data: analyticsData, error: analyticsError } = await supabase
+      .from('analytics')
+      .select('*')
+      .eq('url_id', id)
+      .order('timestamp', { ascending: false });
+      
+    if (analyticsError) throw analyticsError;
+    
+    const analyticsList = analyticsData || [];
+    
+    // Process data to get daily clicks
+    const clicksByDay = new Map<string, number>();
+    const countriesMap = new Map<string, number>();
+    const recentVisits: Visit[] = [];
+    
+    analyticsList.forEach(visit => {
+      // Process daily clicks
+      const date = new Date(visit.timestamp).toISOString().split('T')[0];
+      clicksByDay.set(date, (clicksByDay.get(date) || 0) + 1);
+      
+      // Process countries
+      if (visit.country) {
+        countriesMap.set(visit.country, (countriesMap.get(visit.country) || 0) + 1);
+      }
+      
+      // Add to recent visits
+      recentVisits.push({
+        id: visit.id,
+        timestamp: visit.timestamp,
+        country: visit.country || 'Unknown',
+        userAgent: visit.user_agent || 'Unknown',
+        ip: visit.ip
+      });
+    });
+    
+    // Convert maps to arrays
+    const dailyClicks = Array.from(clicksByDay.entries()).map(([date, clicks]) => ({
+      date,
+      clicks
+    })).sort((a, b) => a.date.localeCompare(b.date));
+    
+    const countries = Array.from(countriesMap.entries()).map(([name, value]) => ({
+      name,
+      value
+    })).sort((a, b) => b.value - a.value);
+    
+    return {
+      id: urlData.id,
+      shortCode: urlData.short_code,
+      originalUrl: urlData.original_url,
+      createdAt: urlData.created_at,
+      clicks: urlData.clicks,
+      dailyClicks,
+      countries,
+      recentVisits: recentVisits.slice(0, 10) // Take only 10 most recent
+    };
+  } catch (error) {
+    console.error('Error fetching URL analytics:', error);
+    throw error;
+  }
+};
