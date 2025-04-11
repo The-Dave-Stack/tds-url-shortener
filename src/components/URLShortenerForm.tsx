@@ -4,7 +4,7 @@
  * Allows users to create shortened URLs with optional custom aliases
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,9 +13,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Link as LinkIcon } from "lucide-react";
-import { createShortUrl } from "@/utils/api";
+import { createShortUrl, checkAnonymousQuota, AnonymousQuota } from "@/utils/api";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { Progress } from "@/components/ui/progress";
 
 // Form schema validation
 const formSchema = z.object({
@@ -32,6 +33,7 @@ type FormValues = z.infer<typeof formSchema>;
 const URLShortenerForm = () => {
   const [loading, setLoading] = useState(false);
   const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [quota, setQuota] = useState<AnonymousQuota | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -43,6 +45,22 @@ const URLShortenerForm = () => {
       alias: "",
     },
   });
+
+  // Check quota for anonymous users
+  useEffect(() => {
+    const fetchQuota = async () => {
+      if (!user) {
+        try {
+          const quotaInfo = await checkAnonymousQuota();
+          setQuota(quotaInfo);
+        } catch (error) {
+          console.error("Error fetching quota:", error);
+        }
+      }
+    };
+
+    fetchQuota();
+  }, [user]);
 
   /**
    * Handle form submission
@@ -65,6 +83,12 @@ const URLShortenerForm = () => {
       form.reset();
       
       toast.success("URL shortened successfully!");
+      
+      // Update quota for anonymous users
+      if (!user) {
+        const updatedQuota = await checkAnonymousQuota();
+        setQuota(updatedQuota);
+      }
       
       // If user is logged in, redirect to dashboard
       if (user) {
@@ -135,6 +159,22 @@ const URLShortenerForm = () => {
             Shorten Your URL
           </h2>
           
+          {!user && quota && (
+            <div className="mb-4 p-3 bg-fog-gray/50 dark:bg-night-blue/50 rounded-lg">
+              <div className="flex justify-between text-sm text-petrol-blue/80 dark:text-fog-gray/80 mb-1">
+                <span>Daily limit: {quota.used} of {quota.limit} URLs used</span>
+                <span>{quota.remaining} remaining</span>
+              </div>
+              <Progress 
+                value={(quota.used / quota.limit) * 100} 
+                className="h-2" 
+              />
+              <div className="mt-2 text-xs text-petrol-blue/70 dark:text-fog-gray/70 text-center">
+                <span>Sign in to create unlimited shortened URLs</span>
+              </div>
+            </div>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -176,11 +216,17 @@ const URLShortenerForm = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-teal-deep hover:bg-mint-green text-white" 
-                disabled={loading}
+                disabled={loading || (!user && quota?.remaining === 0)}
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
                 {loading ? "Processing..." : "Shorten URL"}
               </Button>
+
+              {!user && quota?.remaining === 0 && (
+                <div className="mt-2 text-center text-amber-600 dark:text-amber-400 text-sm">
+                  You've reached the daily limit. Sign in to create more URLs.
+                </div>
+              )}
             </form>
           </Form>
         </>

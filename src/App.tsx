@@ -19,6 +19,7 @@ import RequireAuth from "./components/RequireAuth";
 import RedirectHandler from "./components/RedirectHandler";
 import Health from "./pages/Health";
 import AdminPanel from "./pages/AdminPanel";
+import AnonymousStats from "./pages/AnonymousStats";
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -62,6 +63,8 @@ const App = () => (
                   </RequireAuth>
                 } 
               />
+              {/* New route for anonymous stats */}
+              <Route path="/anonymous-stats" element={<AnonymousStats />} />
               {/* Health check endpoint for Docker */}
               <Route path="/health" element={<Health />} />
               {/* Route for handling short URL redirects */}

@@ -78,22 +78,38 @@ const Index = () => {
               ? 'Ready to manage your shortened links?' 
               : 'Want to access all features?'}
           </p>
-          <Button 
-            asChild
-            className="bg-teal-deep hover:bg-mint-green text-white"
-            size="lg"
-          >
-            <Link to={user ? "/dashboard" : "/auth"}>
-              {user ? (
-                <>
-                  <LineChart className="h-5 w-5 mr-2" />
-                  Go to Dashboard
-                </>
-              ) : (
-                'Sign In or Register'
-              )}
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button 
+              asChild
+              className="bg-teal-deep hover:bg-mint-green text-white"
+              size="lg"
+            >
+              <Link to={user ? "/dashboard" : "/auth"}>
+                {user ? (
+                  <>
+                    <LineChart className="h-5 w-5 mr-2" />
+                    Go to Dashboard
+                  </>
+                ) : (
+                  'Sign In or Register'
+                )}
+              </Link>
+            </Button>
+            
+            {!user && (
+              <Button 
+                asChild
+                variant="outline"
+                className="border-teal-deep text-teal-deep hover:bg-mint-green/10 hover:text-mint-green hover:border-mint-green"
+                size="lg"
+              >
+                <Link to="/anonymous-stats">
+                  <BarChart className="h-5 w-5 mr-2" />
+                  View My Anonymous URLs
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Layout>

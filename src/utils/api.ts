@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { generateShortCode } from '@/utils/validation';
+import { v4 as uuidv4 } from 'uuid';
 
 // Interface for the URL data
 export interface UrlData {
@@ -38,6 +40,71 @@ export interface Visit {
   ip?: string;
 }
 
+// Interface for anonymous quota information
+export interface AnonymousQuota {
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
+/**
+ * Get or create a client ID for anonymous users
+ * @returns A unique client ID stored in localStorage
+ */
+const getClientId = (): string => {
+  let clientId = localStorage.getItem('anonymous_client_id');
+  if (!clientId) {
+    clientId = uuidv4();
+    localStorage.setItem('anonymous_client_id', clientId);
+  }
+  return clientId;
+};
+
+/**
+ * Check if an anonymous user has reached their daily quota
+ * @returns Promise with the quota information
+ */
+export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
+  try {
+    const clientId = getClientId();
+    
+    // Get the daily limit from app_settings
+    const { data: settingsData } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'anonymous_daily_limit')
+      .single();
+    
+    const dailyLimit = settingsData?.value?.limit || 50;
+    
+    // Check the current usage for today
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    const { data: quotaData, error } = await supabase
+      .from('anonymous_daily_quota')
+      .select('count')
+      .eq('client_id', clientId)
+      .eq('date', today)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error('Error checking quota:', error);
+      throw new Error('Error checking quota');
+    }
+    
+    const usedCount = quotaData?.count || 0;
+    
+    return {
+      used: usedCount,
+      limit: dailyLimit,
+      remaining: Math.max(0, dailyLimit - usedCount)
+    };
+  } catch (error) {
+    console.error('Error in checkAnonymousQuota:', error);
+    return { used: 0, limit: 50, remaining: 50 }; // Fallback to default values
+  }
+};
+
 /**
  * Create a short URL
  * @param originalUrl The original URL to shorten
@@ -51,39 +118,92 @@ export const createShortUrl = async (
   try {
     const { data: user } = await supabase.auth.getUser();
     
-    if (!user.user) {
-      throw new Error('Usuario no autenticado');
-    }
-    
-    const shortCode = customAlias || generateShortCode();
-    
-    const { data, error } = await supabase
-      .from('urls')
-      .insert([
-        { 
-          original_url: originalUrl,
-          short_code: shortCode,
-          custom_alias: customAlias || null,
-          user_id: user.user.id
-        }
-      ])
-      .select()
-      .single();
+    // Check if the user is authenticated
+    if (user.user) {
+      // Create URL for authenticated user
+      const shortCode = customAlias || generateShortCode();
       
-    if (error) throw error;
-    
-    if (!data) {
-      throw new Error('Error al crear la URL acortada');
+      const { data, error } = await supabase
+        .from('urls')
+        .insert([
+          { 
+            original_url: originalUrl,
+            short_code: shortCode,
+            custom_alias: customAlias || null,
+            user_id: user.user.id
+          }
+        ])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      if (!data) {
+        throw new Error('Error al crear la URL acortada');
+      }
+      
+      return {
+        id: data.id,
+        originalUrl: data.original_url,
+        shortCode: data.short_code,
+        createdAt: data.created_at,
+        clicks: data.clicks,
+        customAlias: data.custom_alias
+      };
+    } else {
+      // Create URL for anonymous user
+      const clientId = getClientId();
+      
+      // Check quota before creating
+      const quota = await checkAnonymousQuota();
+      if (quota.remaining <= 0) {
+        throw new Error('Has alcanzado el límite diario de URLs acortadas. Inicia sesión para crear más.');
+      }
+      
+      const shortCode = customAlias || generateShortCode();
+      
+      // Insert the URL
+      const { data: urlData, error: urlError } = await supabase
+        .from('anonymous_urls')
+        .insert([
+          { 
+            original_url: originalUrl,
+            short_code: shortCode,
+            custom_alias: customAlias || null,
+            client_id: clientId
+          }
+        ])
+        .select()
+        .single();
+        
+      if (urlError) throw urlError;
+      
+      if (!urlData) {
+        throw new Error('Error al crear la URL acortada');
+      }
+      
+      // Update or insert quota record
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      const { error: quotaError } = await supabase.rpc('increment_anonymous_quota', {
+        client_id_param: clientId,
+        date_param: today
+      });
+      
+      if (quotaError) {
+        console.error('Error updating quota:', quotaError);
+        // Continue even if there's an error with quota update
+      }
+      
+      return {
+        id: urlData.id,
+        originalUrl: urlData.original_url,
+        shortCode: urlData.short_code,
+        createdAt: urlData.created_at,
+        clicks: urlData.clicks,
+        customAlias: urlData.custom_alias
+      };
     }
-    
-    return {
-      id: data.id,
-      originalUrl: data.original_url,
-      shortCode: data.short_code,
-      createdAt: data.created_at,
-      clicks: data.clicks,
-      customAlias: data.custom_alias
-    };
   } catch (error) {
     console.error('Error creating short URL:', error);
     throw error;
@@ -98,30 +218,53 @@ export const getUserUrls = async (): Promise<UrlData[]> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
-    if (!user.user) {
-      throw new Error('Usuario no autenticado');
-    }
-    
-    const { data, error } = await supabase
-      .from('urls')
-      .select('*')
-      .eq('user_id', user.user.id)
-      .order('created_at', { ascending: false });
+    if (user.user) {
+      // Get URLs for authenticated user
+      const { data, error } = await supabase
+        .from('urls')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    
-    if (!data) {
-      return [];
+      if (!data) {
+        return [];
+      }
+      
+      return data.map(url => ({
+        id: url.id,
+        originalUrl: url.original_url,
+        shortCode: url.short_code,
+        createdAt: url.created_at,
+        clicks: url.clicks,
+        customAlias: url.custom_alias
+      }));
+    } else {
+      // Get URLs for anonymous user
+      const clientId = getClientId();
+      
+      const { data, error } = await supabase
+        .from('anonymous_urls')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      if (!data) {
+        return [];
+      }
+      
+      return data.map(url => ({
+        id: url.id,
+        originalUrl: url.original_url,
+        shortCode: url.short_code,
+        createdAt: url.created_at,
+        clicks: url.clicks,
+        customAlias: url.custom_alias
+      }));
     }
-    
-    return data.map(url => ({
-      id: url.id,
-      originalUrl: url.original_url,
-      shortCode: url.short_code,
-      createdAt: url.created_at,
-      clicks: url.clicks,
-      customAlias: url.custom_alias
-    }));
   } catch (error) {
     console.error('Error fetching user URLs:', error);
     throw error;
@@ -137,18 +280,27 @@ export const deleteUrl = async (id: string): Promise<void> => {
   try {
     const { data: user } = await supabase.auth.getUser();
     
-    if (!user.user) {
-      throw new Error('User not authenticated');
-    }
-    
-    const { error } = await supabase
-      .from('urls')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.user.id);
+    if (user.user) {
+      // Delete URL for authenticated user
+      const { error } = await supabase
+        .from('urls')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.user.id);
+        
+      if (error) throw error;
+    } else {
+      // Delete URL for anonymous user
+      const clientId = getClientId();
       
-    if (error) throw error;
-    
+      const { error } = await supabase
+        .from('anonymous_urls')
+        .delete()
+        .eq('id', id)
+        .eq('client_id', clientId);
+        
+      if (error) throw error;
+    }
   } catch (error) {
     console.error('Error deleting URL:', error);
     throw error;
@@ -162,14 +314,36 @@ export const deleteUrl = async (id: string): Promise<void> => {
  */
 export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
   try {
-    // Get URL data
-    const { data: urlData, error: urlError } = await supabase
-      .from('urls')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data: user } = await supabase.auth.getUser();
+    
+    let urlData;
+    let isAnonymous = false;
+    
+    if (user.user) {
+      // Get URL data for authenticated user
+      const { data, error } = await supabase
+        .from('urls')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      urlData = data;
+    } else {
+      // Get URL data for anonymous user
+      const clientId = getClientId();
       
-    if (urlError) throw urlError;
+      const { data, error } = await supabase
+        .from('anonymous_urls')
+        .select('*')
+        .eq('id', id)
+        .eq('client_id', clientId)
+        .single();
+        
+      if (error) throw error;
+      urlData = data;
+      isAnonymous = true;
+    }
     
     if (!urlData) {
       throw new Error('URL no encontrada');

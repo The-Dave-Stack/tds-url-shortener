@@ -47,6 +47,57 @@ export type Database = {
           },
         ]
       }
+      anonymous_daily_quota: {
+        Row: {
+          client_id: string
+          count: number
+          date: string
+          id: string
+        }
+        Insert: {
+          client_id: string
+          count?: number
+          date?: string
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          count?: number
+          date?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      anonymous_urls: {
+        Row: {
+          clicks: number
+          client_id: string
+          created_at: string
+          custom_alias: string | null
+          id: string
+          original_url: string
+          short_code: string
+        }
+        Insert: {
+          clicks?: number
+          client_id: string
+          created_at?: string
+          custom_alias?: string | null
+          id?: string
+          original_url: string
+          short_code: string
+        }
+        Update: {
+          clicks?: number
+          client_id?: string
+          created_at?: string
+          custom_alias?: string | null
+          id?: string
+          original_url?: string
+          short_code?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string

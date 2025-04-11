@@ -1,79 +1,105 @@
 
-// Redirect Handler Edge Function (Público)
+// Follow URL Redirect Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
 import { corsHeaders } from '../_shared/cors.ts'
 
-// El cliente de Supabase en el edge function
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 Deno.serve(async (req) => {
-  // Maneja CORS para solicitudes de preflight
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Obtener datos de la solicitud
-    const { url } = req
-    const requestUrl = new URL(url)
-    const path = requestUrl.pathname.split('/').filter(Boolean).slice(1)
+    // Get short code from URL
+    const url = new URL(req.url)
+    const pathParts = url.pathname.split('/')
+    const shortCode = pathParts[pathParts.length - 1]
     
-    if (path.length !== 1) {
+    if (!shortCode) {
       return new Response(
-        JSON.stringify({ error: 'Código corto no especificado' }),
+        JSON.stringify({ error: 'Código URL no proporcionado' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log(`Processing redirect for short code: ${shortCode}`)
     
-    const shortCode = path[0]
+    // Get user's IP and user agent
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown'
+    const userAgent = req.headers.get('user-agent') || 'unknown'
+    const referrer = req.headers.get('referer') || null
     
-    // Encontrar URL por código corto
-    const { data: url_data, error: urlError } = await supabase
+    // Try to find the URL in registered users table first
+    let { data: urlData, error: urlError } = await supabase
       .from('urls')
       .select('id, original_url')
       .eq('short_code', shortCode)
       .single()
+
+    let urlId, originalUrl
+    let isAnonymousUrl = false
     
-    if (urlError || !url_data) {
-      return new Response(
-        JSON.stringify({ error: 'URL no encontrada' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // If not found in registered users table, try anonymous table
+    if (urlError || !urlData) {
+      const { data: anonUrlData, error: anonUrlError } = await supabase
+        .from('anonymous_urls')
+        .select('id, original_url')
+        .eq('short_code', shortCode)
+        .single()
+        
+      if (anonUrlError || !anonUrlData) {
+        return new Response(
+          JSON.stringify({ error: 'URL no encontrada' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      // It's an anonymous URL
+      urlId = anonUrlData.id
+      originalUrl = anonUrlData.original_url
+      isAnonymousUrl = true
+      
+      // Increment clicks counter for anonymous URLs
+      await supabase.rpc('increment_anonymous_clicks', { url_id_param: urlId })
+    } else {
+      // It's a registered user URL
+      urlId = urlData.id
+      originalUrl = urlData.original_url
+      
+      // Increment clicks counter for registered URLs
+      await supabase.rpc('increment_clicks', { url_id: urlId })
     }
     
-    // Registrar analíticas para esta visita
-    const userAgent = req.headers.get('user-agent') || null
+    // Get country information from CF headers if available
+    const country = req.headers.get('cf-ipcountry') || null
     
-    // Obtener la dirección IP y país (en un entorno real podríamos usar un servicio de geolocalización)
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || null
+    // Store analytics data
+    await supabase
+      .from('analytics')
+      .insert([
+        {
+          url_id: urlId,
+          ip,
+          user_agent: userAgent,
+          referrer,
+          country
+        }
+      ])
     
-    // Insertar datos de analíticas
-    await supabase.from('analytics').insert([
-      { 
-        url_id: url_data.id,
-        user_agent: userAgent,
-        ip: ip,
-        // En un entorno real podríamos obtener el país a partir de la IP
-        country: null
-      }
-    ])
-
-    // Incrementar contador de clicks
-    await supabase.rpc('increment_clicks', { url_id: url_data.id })
-    
-    // Devolver la URL original
+    // Return the original URL
     return new Response(
-      JSON.stringify({ originalUrl: url_data.original_url }),
+      JSON.stringify({ originalUrl }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-    
   } catch (error) {
-    console.error('Error en la solicitud de redirección:', error)
+    console.error('Error processing redirect:', error)
     
     return new Response(
-      JSON.stringify({ error: 'Error interno del servidor' }),
+      JSON.stringify({ error: 'Error en el servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
