@@ -6,16 +6,39 @@ import URLList from "@/components/URLList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams } from "react-router-dom";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import { useQuery } from "@tanstack/react-query";
+import { getUrlAnalytics } from "@/utils/api";
+import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<"shorten" | "links">("links");
   const { id } = useParams<{ id: string }>();
   
   // If there's an ID in the URL, show the analytics dashboard for that URL
+  const {
+    data: analyticsData,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['urlAnalytics', id],
+    queryFn: () => getUrlAnalytics(id as string),
+    enabled: !!id,
+  });
+  
   if (id) {
     return (
       <Layout>
-        <AnalyticsDashboard />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-teal-deep" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 p-8">
+            Error loading analytics data. Please try again.
+          </div>
+        ) : analyticsData ? (
+          <AnalyticsDashboard data={analyticsData} />
+        ) : null}
       </Layout>
     );
   }

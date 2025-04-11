@@ -3,6 +3,10 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
+interface ClicksChartProps {
+  data: { date: string; clicks: number; }[];
+}
+
 // Mock data for the chart
 const generateLastWeekData = () => {
   const data = [];
@@ -43,7 +47,7 @@ const dataMap = {
   "30d": generateLastMonthData()
 };
 
-const ClicksChart = () => {
+const ClicksChart = ({ data }: ClicksChartProps) => {
   const [timeRange, setTimeRange] = useState<"7d" | "30d">("7d");
   
   return (
@@ -80,7 +84,7 @@ const ClicksChart = () => {
       <CardContent>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dataMap[timeRange]} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <LineChart data={data || dataMap[timeRange]} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis 
                 dataKey="date" 

@@ -132,14 +132,31 @@ export const createShortUrl = async (
       // Update or insert quota record
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       
-      const { error: quotaError } = await supabase.rpc('increment_anonymous_quota', {
-        client_id_param: clientId,
-        date_param: today
-      });
+      // Use a more direct approach to update the quota since the RPC function is not working
+      const { data: existingQuota } = await supabase
+        .from('anonymous_daily_quota')
+        .select('*')
+        .eq('client_id', clientId)
+        .eq('date', today)
+        .single();
       
-      if (quotaError) {
-        console.error('Error updating quota:', quotaError);
-        // Continue even if there's an error with quota update
+      if (existingQuota) {
+        // Update existing quota
+        await supabase
+          .from('anonymous_daily_quota')
+          .update({ count: existingQuota.count + 1 })
+          .eq('id', existingQuota.id);
+      } else {
+        // Insert new quota record
+        await supabase
+          .from('anonymous_daily_quota')
+          .insert([
+            {
+              client_id: clientId,
+              date: today,
+              count: 1
+            }
+          ]);
       }
       
       return {

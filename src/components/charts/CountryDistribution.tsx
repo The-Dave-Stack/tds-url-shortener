@@ -2,8 +2,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
+interface CountryDistributionProps {
+  data: { name: string; value: number; }[];
+}
+
 // Mock data for countries
-const data = [
+const mockData = [
   { name: "España", value: 135, color: "#00b6e1" },
   { name: "México", value: 87, color: "#33c5e7" },
   { name: "Argentina", value: 45, color: "#66d3ed" },
@@ -12,7 +16,23 @@ const data = [
   { name: "Otros", value: 15, color: "#e6f8fc" }
 ];
 
-const CountryDistribution = () => {
+// Generate colors for the chart
+const generateColors = (count: number) => {
+  const baseColor = "#00b6e1";
+  const colors = [];
+  
+  for (let i = 0; i < count; i++) {
+    const opacity = 1 - (i * 0.15);
+    colors.push(`rgba(0, 182, 225, ${opacity > 0.2 ? opacity : 0.2})`);
+  }
+  
+  return colors;
+};
+
+const CountryDistribution = ({ data }: CountryDistributionProps) => {
+  const countryData = data && data.length > 0 ? data : mockData;
+  const colors = generateColors(countryData.length);
+  
   return (
     <Card className="w-full h-full">
       <CardHeader>
@@ -23,7 +43,7 @@ const CountryDistribution = () => {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={countryData}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -33,8 +53,11 @@ const CountryDistribution = () => {
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 labelLine={false}
               >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                {countryData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.color || colors[index % colors.length]} 
+                  />
                 ))}
               </Pie>
               <Tooltip 
