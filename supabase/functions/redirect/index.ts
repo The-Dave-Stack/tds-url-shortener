@@ -74,10 +74,29 @@ Deno.serve(async (req) => {
       await supabase.rpc('increment_clicks', { url_id: urlId })
     }
     
-    // Get country information from CF headers if available
-    const country = req.headers.get('cf-ipcountry') || null
+    // Get geolocation data from IP (using Cloudflare headers if available)
+    let country = req.headers.get('cf-ipcountry') || null
+    let region = req.headers.get('cf-region') || null
+    let city = req.headers.get('cf-city') || null
     
-    // Store analytics data
+    // If we don't have Cloudflare headers, try to get IP geolocation from a free API
+    // (For local development or non-Cloudflare environments)
+    if (!country && ip !== 'unknown' && !ip.includes('127.0.0.1') && !ip.includes('::1')) {
+      try {
+        // Intenta obtener geolocalización basada en IP (esto funcionará en Cloudflare pero es un fallback)
+        const geoResponse = await fetch(`https://ipinfo.io/${ip}/json?token=undefined`)
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json()
+          country = geoData.country || null
+          region = geoData.region || null
+          city = geoData.city || null
+        }
+      } catch (e) {
+        console.error('Error getting geolocation data:', e)
+      }
+    }
+    
+    // Store analytics data with enhanced geolocation info
     await supabase
       .from('analytics')
       .insert([
@@ -86,7 +105,9 @@ Deno.serve(async (req) => {
           ip,
           user_agent: userAgent,
           referrer,
-          country
+          country,
+          region,
+          city
         }
       ])
     

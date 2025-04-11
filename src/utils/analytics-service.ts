@@ -68,14 +68,16 @@ export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
       
       // Process countries
       if (visit.country) {
-        countriesMap.set(visit.country, (countriesMap.get(visit.country) || 0) + 1);
+        // Normalize country name - some APIs use two-letter country codes
+        const countryName = getFullCountryName(visit.country);
+        countriesMap.set(countryName, (countriesMap.get(countryName) || 0) + 1);
       }
       
       // Add to recent visits
       recentVisits.push({
         id: visit.id,
         timestamp: visit.timestamp,
-        country: visit.country || 'Unknown',
+        country: visit.country ? getFullCountryName(visit.country) : 'Unknown',
         userAgent: visit.user_agent || 'Unknown',
         ip: visit.ip
       });
@@ -107,3 +109,44 @@ export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
     throw error;
   }
 };
+
+/**
+ * Convert country codes to full country names
+ * @param countryCode The country code or name
+ * @returns The full country name
+ */
+function getFullCountryName(countryCode: string): string {
+  // Mapa de códigos ISO a nombres completos en español
+  const countryMap: Record<string, string> = {
+    'ES': 'España',
+    'MX': 'México',
+    'AR': 'Argentina',
+    'CO': 'Colombia',
+    'CL': 'Chile',
+    'US': 'Estados Unidos',
+    'PE': 'Perú',
+    'BR': 'Brasil',
+    'VE': 'Venezuela',
+    'EC': 'Ecuador',
+    'UY': 'Uruguay',
+    'PY': 'Paraguay',
+    'BO': 'Bolivia',
+    'PA': 'Panamá',
+    'CR': 'Costa Rica',
+    'DO': 'República Dominicana',
+    'GT': 'Guatemala',
+    'SV': 'El Salvador',
+    'HN': 'Honduras',
+    'NI': 'Nicaragua',
+    'PR': 'Puerto Rico',
+    'CU': 'Cuba',
+  };
+
+  // Si es un código de país de 2 letras, convertirlo a nombre completo
+  if (countryCode.length === 2 && countryMap[countryCode.toUpperCase()]) {
+    return countryMap[countryCode.toUpperCase()];
+  }
+
+  // Si ya es un nombre completo o no tenemos mapeo, devolverlo tal cual
+  return countryCode;
+}

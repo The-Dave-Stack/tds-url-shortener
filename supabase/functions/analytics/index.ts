@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
         )
       }
       
-      // Obtener los datos de análisis
+      // Obtener los datos de análisis con información geográfica ampliada
       const { data: analyticsData, error: analyticsError } = await supabase
         .from('analytics')
         .select('*')
@@ -80,9 +80,10 @@ Deno.serve(async (req) => {
         const date = new Date(visit.timestamp).toISOString().split('T')[0]
         clicksByDay.set(date, (clicksByDay.get(date) || 0) + 1)
         
-        // Procesar países
+        // Procesar países con nombres normalizados
         if (visit.country) {
-          countriesMap.set(visit.country, (countriesMap.get(visit.country) || 0) + 1)
+          const countryName = getFullCountryName(visit.country)
+          countriesMap.set(countryName, (countriesMap.get(countryName) || 0) + 1)
         }
       })
       
@@ -101,7 +102,9 @@ Deno.serve(async (req) => {
       const recentVisits = analyticsArray.slice(0, 10).map(visit => ({
         id: visit.id,
         timestamp: visit.timestamp,
-        country: visit.country || 'Unknown',
+        country: visit.country ? getFullCountryName(visit.country) : 'Unknown',
+        region: visit.region || null,
+        city: visit.city || null,
         userAgent: visit.user_agent || 'Unknown',
         ip: visit.ip
       }))
@@ -136,3 +139,44 @@ Deno.serve(async (req) => {
     )
   }
 })
+
+/**
+ * Convert country codes to full country names
+ * @param countryCode The country code or name
+ * @returns The full country name
+ */
+function getFullCountryName(countryCode: string): string {
+  // Mapa de códigos ISO a nombres completos en español
+  const countryMap: Record<string, string> = {
+    'ES': 'España',
+    'MX': 'México',
+    'AR': 'Argentina',
+    'CO': 'Colombia',
+    'CL': 'Chile',
+    'US': 'Estados Unidos',
+    'PE': 'Perú',
+    'BR': 'Brasil',
+    'VE': 'Venezuela',
+    'EC': 'Ecuador',
+    'UY': 'Uruguay',
+    'PY': 'Paraguay',
+    'BO': 'Bolivia',
+    'PA': 'Panamá',
+    'CR': 'Costa Rica',
+    'DO': 'República Dominicana',
+    'GT': 'Guatemala',
+    'SV': 'El Salvador',
+    'HN': 'Honduras',
+    'NI': 'Nicaragua',
+    'PR': 'Puerto Rico',
+    'CU': 'Cuba',
+  };
+
+  // Si es un código de país de 2 letras, convertirlo a nombre completo
+  if (countryCode.length === 2 && countryMap[countryCode.toUpperCase()]) {
+    return countryMap[countryCode.toUpperCase()];
+  }
+
+  // Si ya es un nombre completo o no tenemos mapeo, devolverlo tal cual
+  return countryCode;
+}
