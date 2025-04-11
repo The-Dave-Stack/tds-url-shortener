@@ -49,6 +49,7 @@ export const fetchUserProfile = async (
 // Check if registration is allowed
 export const checkRegistrationAllowed = async (t: (key: string) => string) => {
   try {
+    console.log('Checking if registration is allowed...');
     const { data: appSettings, error: settingsError } = await supabase
       .from('app_settings')
       .select('value')
@@ -57,22 +58,27 @@ export const checkRegistrationAllowed = async (t: (key: string) => string) => {
     
     if (settingsError) {
       console.error('Error checking registration settings:', settingsError);
-      // Default to allowing registration if we can't check the setting
-      return true;
+      // Default to disabling registration if we can't check the setting
+      return false;
     }
 
+    console.log('Registration settings:', appSettings);
+    
     if (appSettings && appSettings.value) {
-      // Safely check if registration is disabled
+      // Safely check if registration is enabled
       const settingValue = appSettings.value;
-      return typeof settingValue === 'object' && 
-        settingValue !== null && 
-        'enabled' in settingValue ? 
-        Boolean(settingValue.enabled) : true;
+      if (typeof settingValue === 'object' && 
+          settingValue !== null && 
+          'enabled' in settingValue) {
+        console.log('Registration enabled:', Boolean(settingValue.enabled));
+        return Boolean(settingValue.enabled);
+      }
     }
 
-    return true;
+    // Default to disabling registration if setting is not found or malformed
+    return false;
   } catch (error) {
     console.error('Error checking registration status:', error);
-    return true;
+    return false;
   }
 };

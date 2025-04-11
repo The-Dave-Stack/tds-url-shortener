@@ -15,9 +15,11 @@ const Auth = () => {
     const checkRegistrationStatus = async () => {
       try {
         const isAllowed = await checkRegistrationAllowed(t);
+        console.log('Registration allowed:', isAllowed);
         setRegistrationEnabled(isAllowed);
       } catch (error) {
-        console.error('Error in checkRegistrationStatus:', error);
+        console.error('Error checking registration status:', error);
+        setRegistrationEnabled(false);
       }
     };
 
@@ -36,6 +38,7 @@ const Auth = () => {
               {t('auth.signIn')}
             </CardDescription>
             
+            {/* The RegistrationAlert will only show if registration is enabled */}
             <RegistrationAlert registrationEnabled={registrationEnabled} />
           </CardHeader>
           
