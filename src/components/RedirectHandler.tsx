@@ -1,21 +1,22 @@
 
 /**
  * RedirectHandler Component
- * Handles URL redirection based on short codes and records analytics
+ * Maneja la redirección de URL basada en códigos cortos y registra analíticas
  */
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+
+// URL base de la API (edge function)
+const SUPABASE_URL = "https://zzzrllcoaqtszrskzxrg.supabase.co";
 
 /**
  * RedirectHandler component
- * This component:
- * 1. Extracts shortCode from URL params
- * 2. Looks up the original URL in the database
- * 3. Records analytics for the click
- * 4. Redirects user to the original URL
+ * Este componente:
+ * 1. Extrae el shortCode de los parámetros URL
+ * 2. Llama a la edge function de redirección
+ * 3. Redirige al usuario a la URL original
  */
 const RedirectHandler = () => {
   const { shortCode } = useParams<{ shortCode: string }>();
@@ -24,8 +25,8 @@ const RedirectHandler = () => {
 
   useEffect(() => {
     /**
-     * Process the redirect
-     * Looks up URL by short code and redirects user
+     * Procesa la redirección
+     * Llama a la edge function de redirección y redirige al usuario
      */
     const handleRedirect = async () => {
       if (!shortCode) {
@@ -34,36 +35,27 @@ const RedirectHandler = () => {
       }
 
       try {
-        // Find URL by short code
-        const { data: url, error: urlError } = await supabase
-          .from('urls')
-          .select('id, original_url')
-          .eq('short_code', shortCode)
-          .single();
+        // Llamar a la edge function de redirección
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/redirect/${shortCode}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
 
-        if (urlError || !url) {
-          throw new Error("URL not found");
+        if (!response.ok) {
+          throw new Error("URL no encontrada");
         }
 
-        // Record analytics for this visit
-        await supabase.from('analytics').insert([
-          { 
-            url_id: url.id,
-            user_agent: navigator.userAgent,
-            // Note: IP cannot be obtained on client, would need an edge function
-          }
-        ]);
-
-        // Increment click counter
-        await supabase.rpc('increment_clicks', { url_id: url.id });
-
-        // Redirect user to the original URL
-        window.location.href = url.original_url;
-      } catch (error) {
-        console.error("Redirect error:", error);
-        setError("The requested URL does not exist or has been removed.");
+        const data = await response.json();
         
-        // Redirect to home page after delay
+        // Redirigir al usuario a la URL original
+        window.location.href = data.originalUrl;
+      } catch (error) {
+        console.error("Error de redirección:", error);
+        setError("La URL solicitada no existe o ha sido eliminada.");
+        
+        // Redirigir a la página de inicio después de un retraso
         setTimeout(() => {
           navigate('/');
         }, 3000);
@@ -77,14 +69,14 @@ const RedirectHandler = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-fog-gray dark:bg-night-blue text-petrol-blue dark:text-fog-gray">
       {error ? (
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Link Not Found</h1>
+          <h1 className="text-2xl font-bold mb-2">Enlace no encontrado</h1>
           <p className="text-petrol-blue/80 dark:text-fog-gray/80 mb-4">{error}</p>
-          <p className="text-petrol-blue/60 dark:text-fog-gray/60">Redirecting to home page...</p>
+          <p className="text-petrol-blue/60 dark:text-fog-gray/60">Redirigiendo a la página de inicio...</p>
         </div>
       ) : (
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-teal-deep mx-auto mb-4" />
-          <p className="text-lg">Redirecting...</p>
+          <p className="text-lg">Redirigiendo...</p>
         </div>
       )}
     </div>
