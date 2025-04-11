@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,8 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(false); // Default to false
   const { signIn, signUp } = useAuth();
-  const [activeTab, setActiveTab] = useState<"login">("login"); // Only login by default
+  // Fix: Change the type to include both possible values
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const { t } = useTranslation();
 
   useEffect(() => {
