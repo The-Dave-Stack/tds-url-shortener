@@ -1,4 +1,3 @@
-
 {
   "common": {
     "appName": "Acortador de URLs",
@@ -30,7 +29,8 @@
     "loginSuccess": "Sesión iniciada correctamente",
     "loginError": "Error al iniciar sesión",
     "registerError": "Error en el registro",
-    "accountDisabled": "Esta cuenta ha sido deshabilitada"
+    "accountDisabled": "Esta cuenta ha sido deshabilitada",
+    "registrationAvailable": "El registro está abierto actualmente. Puedes crear una nueva cuenta."
   },
   "urls": {
     "shortener": "Acortador de URLs",

@@ -1,4 +1,3 @@
-
 {
   "common": {
     "appName": "URL Shortener",
@@ -30,7 +29,8 @@
     "loginSuccess": "Logged in successfully",
     "loginError": "Login error",
     "registerError": "Registration error",
-    "accountDisabled": "This account has been disabled"
+    "accountDisabled": "This account has been disabled",
+    "registrationAvailable": "Registration is currently open. You can create a new account."
   },
   "urls": {
     "shortener": "URL Shortener",
