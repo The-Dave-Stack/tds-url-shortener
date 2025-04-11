@@ -63,7 +63,7 @@ const App = () => (
                   </RequireAuth>
                 } 
               />
-              {/* New route for anonymous stats */}
+              {/* Route for anonymous stats */}
               <Route path="/anonymous-stats" element={<AnonymousStats />} />
               {/* Health check endpoint for Docker */}
               <Route path="/health" element={<Health />} />

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { generateShortCode } from '@/utils/validation';
 import { v4 as uuidv4 } from 'uuid';
@@ -75,7 +74,9 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
       .eq('key', 'anonymous_daily_limit')
       .single();
     
-    const dailyLimit = settingsData?.value?.limit || 50;
+    const dailyLimit = settingsData?.value ? 
+      (typeof settingsData.value === 'object' && settingsData.value !== null && 'limit' in settingsData.value ? 
+        Number(settingsData.value.limit) : 50) : 50;
     
     // Check the current usage for today
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
