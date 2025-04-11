@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getUserUrls, deleteUrl, UrlData } from "@/utils/api";
+import { getUserUrls, deleteUrl, UrlData, getUrlAnalytics } from "@/utils/api";
 import Layout from "@/components/Layout";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,8 @@ const AnonymousStats = () => {
   const [urls, setUrls] = useState<UrlData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUrlId, setSelectedUrlId] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<any | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Fetch URLs for anonymous user
   useEffect(() => {
@@ -37,6 +39,30 @@ const AnonymousStats = () => {
 
     fetchUrls();
   }, []);
+
+  // Fetch analytics when a URL is selected
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!selectedUrlId) {
+        setAnalytics(null);
+        return;
+      }
+      
+      try {
+        setAnalyticsLoading(true);
+        const data = await getUrlAnalytics(selectedUrlId);
+        setAnalytics(data);
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+        toast.error("Error loading analytics data");
+        setAnalytics(null);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    
+    fetchAnalytics();
+  }, [selectedUrlId]);
 
   // Handle URL deletion
   const handleDelete = async (id: string) => {
@@ -162,9 +188,17 @@ const AnonymousStats = () => {
           </CardContent>
         </Card>
         
-        {selectedUrlId && (
+        {selectedUrlId && analytics && (
           <div className="mt-6">
-            <AnalyticsDashboard urlId={selectedUrlId} />
+            {analyticsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-deep" />
+              </div>
+            ) : (
+              <AnalyticsDashboard 
+                data={analytics}
+              />
+            )}
           </div>
         )}
         
