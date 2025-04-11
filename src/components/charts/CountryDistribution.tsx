@@ -1,7 +1,6 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { useState } from "react";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -87,89 +86,91 @@ const CountryDistribution = ({ data }: CountryDistributionProps) => {
   );
   
   return (
-    <Card className="w-full h-full">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold">Distribución por país</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeView} onValueChange={(val) => setActiveView(val as "chart" | "map")}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+    <div className="w-full h-full flex flex-col">
+      <div className="px-6 pb-2">
+        <h4 className="text-sm font-medium">Distribución por país</h4>
+      </div>
+      <div className="flex-1">
+        <Tabs value={activeView} onValueChange={(val) => setActiveView(val as "chart" | "map")} className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 mb-2">
             <TabsTrigger value="chart">Gráfico</TabsTrigger>
             <TabsTrigger value="map">Mapa</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="chart" className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={countryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {countryData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.color || colors[index % colors.length]} 
-                    />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value, name) => [`${value} visitas`, name]}
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    borderRadius: '6px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                    border: '1px solid #e5e7eb'
-                  }}
-                />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </TabsContent>
-          
-          <TabsContent value="map">
-            <div className="h-64 w-full">
-              {countriesWithCoordinates.length > 0 ? (
-                <MapContainer 
-                  center={[20, 0]} 
-                  zoom={2} 
-                  scrollWheelZoom={false} 
-                  style={{ height: "100%", width: "100%" }}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          <div className="flex-1">
+            <TabsContent value="chart" className="h-full m-0 p-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={countryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={70}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {countryData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color || colors[index % colors.length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value, name) => [`${value} visitas`, name]}
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      borderRadius: '6px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                      border: '1px solid #e5e7eb'
+                    }}
                   />
-                  {countriesWithCoordinates.map((country) => (
-                    countryCoordinates[country.name] && (
-                      <Marker 
-                        key={country.name}
-                        position={countryCoordinates[country.name]}
-                      >
-                        <Popup>
-                          <div className="font-medium">{country.name}</div>
-                          <div>{country.value} visitas</div>
-                        </Popup>
-                      </Marker>
-                    )
-                  ))}
-                </MapContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-500">
-                  No hay datos de países con coordenadas disponibles
-                </div>
-              )}
-            </div>
-          </TabsContent>
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </TabsContent>
+            
+            <TabsContent value="map" className="h-full m-0 p-0">
+              <div className="h-full w-full">
+                {countriesWithCoordinates.length > 0 ? (
+                  <MapContainer 
+                    center={[20, 0]} 
+                    zoom={2} 
+                    scrollWheelZoom={false} 
+                    style={{ height: "100%", width: "100%" }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {countriesWithCoordinates.map((country) => (
+                      countryCoordinates[country.name] && (
+                        <Marker 
+                          key={country.name}
+                          position={countryCoordinates[country.name]}
+                        >
+                          <Popup>
+                            <div className="font-medium">{country.name}</div>
+                            <div>{country.value} visitas</div>
+                          </Popup>
+                        </Marker>
+                      )
+                    ))}
+                  </MapContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    No hay datos de países con coordenadas disponibles
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

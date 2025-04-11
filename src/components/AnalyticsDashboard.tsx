@@ -79,75 +79,82 @@ const AnalyticsDashboard = ({ data }: AnalyticsDashboardProps) => {
           
           <Separator className="my-4" />
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Daily Clicks Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-petrol-blue dark:text-fog-gray">
-                  Daily Clicks
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 h-[300px]">
-                <ClicksChart data={data.dailyClicks} />
-              </CardContent>
-            </Card>
+          {/* Agregado div contenedor con mayor espacio entre los elementos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Daily Clicks Chart Card */}
+            <div className="flex flex-col h-[400px]">
+              <Card className="flex-1 flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-lg text-petrol-blue dark:text-fog-gray">
+                    Daily Clicks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 flex-1">
+                  <ClicksChart data={data.dailyClicks} />
+                </CardContent>
+              </Card>
+            </div>
             
-            {/* Countries Distribution Chart */}
+            {/* Countries Distribution Chart Card */}
+            <div className="flex flex-col h-[400px]">
+              <Card className="flex-1 flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-lg text-petrol-blue dark:text-fog-gray">
+                    Visitor Locations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 flex-1">
+                  <CountryDistribution data={data.countries} />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          
+          {/* Recent Visits - Con más espacio vertical */}
+          <div className="mt-8">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg text-petrol-blue dark:text-fog-gray">
-                  Visitor Locations
+                  Recent Visits
                 </CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px] p-0">
-                <CountryDistribution data={data.countries} />
+              <CardContent className="p-0">
+                <ScrollArea className="h-64">
+                  <div className="space-y-2 p-4">
+                    {data.recentVisits.map((visit) => (
+                      <div 
+                        key={visit.id} 
+                        className="p-3 bg-fog-gray/20 dark:bg-night-blue/20 rounded-md"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center">
+                            <Globe className="h-4 w-4 text-teal-deep mr-2" />
+                            <span className="font-medium text-petrol-blue dark:text-fog-gray">
+                              {visit.country}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-sm text-petrol-blue/70 dark:text-fog-gray/70">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatDate(visit.timestamp)}
+                          </div>
+                        </div>
+                        <div className="mt-1 flex items-center text-sm text-petrol-blue/60 dark:text-fog-gray/60">
+                          <Smartphone className="h-3 w-3 mr-1" />
+                          {getDeviceType(visit.userAgent)} • {getBrowserInfo(visit.userAgent)}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {data.recentVisits.length === 0 && (
+                      <div className="text-center py-8 text-petrol-blue/60 dark:text-fog-gray/60">
+                        No visit data available yet
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </div>
-          
-          {/* Recent Visits */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg text-petrol-blue dark:text-fog-gray">
-                Recent Visits
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-64">
-                <div className="space-y-2 p-4">
-                  {data.recentVisits.map((visit) => (
-                    <div 
-                      key={visit.id} 
-                      className="p-3 bg-fog-gray/20 dark:bg-night-blue/20 rounded-md"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center">
-                          <Globe className="h-4 w-4 text-teal-deep mr-2" />
-                          <span className="font-medium text-petrol-blue dark:text-fog-gray">
-                            {visit.country}
-                          </span>
-                        </div>
-                        <div className="flex items-center text-sm text-petrol-blue/70 dark:text-fog-gray/70">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {formatDate(visit.timestamp)}
-                        </div>
-                      </div>
-                      <div className="mt-1 flex items-center text-sm text-petrol-blue/60 dark:text-fog-gray/60">
-                        <Smartphone className="h-3 w-3 mr-1" />
-                        {getDeviceType(visit.userAgent)} • {getBrowserInfo(visit.userAgent)}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {data.recentVisits.length === 0 && (
-                    <div className="text-center py-8 text-petrol-blue/60 dark:text-fog-gray/60">
-                      No visit data available yet
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
         </CardContent>
       </Card>
     </div>

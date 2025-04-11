@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 interface ClicksChartProps {
@@ -51,12 +50,12 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
   const [timeRange, setTimeRange] = useState<"7d" | "30d">("7d");
   
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-2">
+    <div className="w-full h-full flex flex-col">
+      <div className="px-6 pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold">
+          <h4 className="text-sm font-medium">
             Clics a lo largo del tiempo
-          </CardTitle>
+          </h4>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setTimeRange("7d")}
@@ -80,54 +79,52 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
             </button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data || dataMap[timeRange]} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="date" 
-                tick={{ fontSize: 12 }} 
-                tickFormatter={(date) => {
-                  const d = new Date(date);
-                  return `${d.getDate()}/${d.getMonth() + 1}`;
-                }}
-                axisLine={{ stroke: "#e5e7eb" }}
-                tickLine={false}
-              />
-              <YAxis 
-                tick={{ fontSize: 12 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) => value}
-              />
-              <Tooltip 
-                formatter={(value) => [`${value} clics`, 'Clics']}
-                labelFormatter={(label) => {
-                  const date = new Date(label);
-                  return date.toLocaleDateString();
-                }}
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '6px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  border: '1px solid #e5e7eb'
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="clicks" 
-                stroke="#00b6e1" 
-                strokeWidth={3} 
-                dot={{ r: 4, fill: "#00b6e1", stroke: "white", strokeWidth: 2 }}
-                activeDot={{ r: 6, stroke: "white", strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data || dataMap[timeRange]} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fontSize: 12 }} 
+              tickFormatter={(date) => {
+                const d = new Date(date);
+                return `${d.getDate()}/${d.getMonth() + 1}`;
+              }}
+              axisLine={{ stroke: "#e5e7eb" }}
+              tickLine={false}
+            />
+            <YAxis 
+              tick={{ fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) => value}
+            />
+            <Tooltip 
+              formatter={(value) => [`${value} clics`, 'Clics']}
+              labelFormatter={(label) => {
+                const date = new Date(label);
+                return date.toLocaleDateString();
+              }}
+              contentStyle={{ 
+                backgroundColor: 'white', 
+                borderRadius: '6px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                border: '1px solid #e5e7eb'
+              }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="clicks" 
+              stroke="#00b6e1" 
+              strokeWidth={3} 
+              dot={{ r: 4, fill: "#00b6e1", stroke: "white", strokeWidth: 2 }}
+              activeDot={{ r: 6, stroke: "white", strokeWidth: 2 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 };
 
