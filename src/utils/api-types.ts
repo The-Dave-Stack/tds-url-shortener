@@ -41,11 +41,11 @@ export interface UrlAnalytics {
 export interface Visit {
   id: string;
   timestamp: string;
-  country: string;
+  country: string | null;
   region?: string | null;
   city?: string | null;
-  userAgent: string;
-  ip?: string;
+  userAgent: string | null;
+  ip?: string | null;
 }
 
 /**

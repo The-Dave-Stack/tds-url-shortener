@@ -31,7 +31,8 @@ const AnalyticsDashboard = ({ data }: AnalyticsDashboardProps) => {
   /**
    * Extract browser information from user agent
    */
-  const getBrowserInfo = (userAgent: string): string => {
+  const getBrowserInfo = (userAgent: string | null): string => {
+    if (!userAgent) return "Unknown";
     if (userAgent.includes("Firefox")) return "Firefox";
     if (userAgent.includes("Chrome")) return "Chrome";
     if (userAgent.includes("Safari")) return "Safari";
@@ -43,7 +44,8 @@ const AnalyticsDashboard = ({ data }: AnalyticsDashboardProps) => {
   /**
    * Extract device type from user agent
    */
-  const getDeviceType = (userAgent: string): string => {
+  const getDeviceType = (userAgent: string | null): string => {
+    if (!userAgent) return "Unknown";
     if (userAgent.includes("Mobile")) return "Mobile";
     if (userAgent.includes("Tablet")) return "Tablet";
     return "Desktop";
@@ -129,7 +131,7 @@ const AnalyticsDashboard = ({ data }: AnalyticsDashboardProps) => {
                           <div className="flex items-center">
                             <Globe className="h-4 w-4 text-teal-deep mr-2" />
                             <span className="font-medium text-petrol-blue dark:text-fog-gray">
-                              {visit.country}
+                              {visit.country || 'Unknown'}
                             </span>
                             {visit.region && visit.city && (
                               <span className="ml-1 text-petrol-blue/70 dark:text-fog-gray/70 text-sm">

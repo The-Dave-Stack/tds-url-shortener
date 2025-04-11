@@ -73,13 +73,14 @@ export const getUrlAnalytics = async (id: string): Promise<UrlAnalytics> => {
         countriesMap.set(countryName, (countriesMap.get(countryName) || 0) + 1);
       }
       
-      // Add to recent visits
+      // Add to recent visits - handling that region and city might not exist in the database
       recentVisits.push({
         id: visit.id,
         timestamp: visit.timestamp,
         country: visit.country ? getFullCountryName(visit.country) : 'Unknown',
-        region: visit.region || null,
-        city: visit.city || null,
+        // Only include region and city if they exist in the database record
+        region: null,
+        city: null,
         userAgent: visit.user_agent || 'Unknown',
         ip: visit.ip
       });
