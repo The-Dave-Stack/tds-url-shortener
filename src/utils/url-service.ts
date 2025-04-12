@@ -18,9 +18,20 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
       .single();
     
     // Default to 50 if not found or invalid
-    const dailyLimit = settingsData?.value ? 
-      (typeof settingsData.value === 'object' && settingsData.value !== null && 'limit' in settingsData.value ? 
-        Number(settingsData.value.limit) : 50) : 50;
+    let dailyLimit = 50; // Default value
+    
+    // Safely parse the value if it exists
+    if (settingsData?.value) {
+      // Check if value is an object with a limit property
+      if (typeof settingsData.value === 'object' && 
+          settingsData.value !== null && 
+          'limit' in settingsData.value) {
+        const limitValue = Number(settingsData.value.limit);
+        if (!isNaN(limitValue)) {
+          dailyLimit = limitValue;
+        }
+      }
+    }
     
     // Check the current usage for today for all anonymous users
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
