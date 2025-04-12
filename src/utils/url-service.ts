@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { generateShortCode } from '@/utils/validation';
 import { getClientId } from '@/utils/anonymous-client';
@@ -22,7 +23,7 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
     // Safely parse the value if it exists
     if (settingsData?.value) {
       // Use a type assertion to avoid TypeScript recursion issues
-      const valueObj = settingsData.value as any;
+      const valueObj = settingsData.value as Record<string, unknown>;
       if (typeof valueObj === 'object' && valueObj !== null && 'limit' in valueObj) {
         const limitValue = Number(valueObj.limit);
         if (!isNaN(limitValue)) {
@@ -150,3 +151,4 @@ export const createShortUrl = async (
     throw error;
   }
 };
+

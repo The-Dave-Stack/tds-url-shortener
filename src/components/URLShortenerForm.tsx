@@ -1,9 +1,4 @@
 
-/**
- * URL Shortener Form Component
- * Allows users to create shortened URLs with optional custom aliases
- */
-
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -47,19 +42,21 @@ const URLShortenerForm = () => {
     },
   });
 
+  // Fetch quota information when the component mounts or when a URL is created
+  const fetchQuota = async () => {
+    if (!user) {
+      try {
+        const quotaInfo = await checkAnonymousQuota();
+        console.log("Quota info:", quotaInfo);
+        setQuota(quotaInfo);
+      } catch (error) {
+        console.error("Error fetching quota:", error);
+      }
+    }
+  };
+  
   // Check quota for anonymous users
   useEffect(() => {
-    const fetchQuota = async () => {
-      if (!user) {
-        try {
-          const quotaInfo = await checkAnonymousQuota();
-          setQuota(quotaInfo);
-        } catch (error) {
-          console.error("Error fetching quota:", error);
-        }
-      }
-    };
-
     fetchQuota();
   }, [user]);
 
@@ -87,8 +84,7 @@ const URLShortenerForm = () => {
       
       // Update quota for anonymous users
       if (!user) {
-        const updatedQuota = await checkAnonymousQuota();
-        setQuota(updatedQuota);
+        await fetchQuota();
       }
       
       // If user is logged in, redirect to dashboard
