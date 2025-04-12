@@ -13,10 +13,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Link as LinkIcon } from "lucide-react";
-import { createShortUrl, checkAnonymousQuota, AnonymousQuota } from "@/utils/api";
+import { createShortUrl, checkAnonymousQuota } from "@/utils/api";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Progress } from "@/components/ui/progress";
+import { AnonymousQuota } from "@/utils/api-types";
 
 // Form schema validation
 const formSchema = z.object({
@@ -162,7 +163,7 @@ const URLShortenerForm = () => {
           {!user && quota && (
             <div className="mb-4 p-3 bg-fog-gray/50 dark:bg-night-blue/50 rounded-lg">
               <div className="flex justify-between text-sm text-petrol-blue/80 dark:text-fog-gray/80 mb-1">
-                <span>Daily limit: {quota.used} of {quota.limit} URLs used</span>
+                <span>Daily anonymous limit: {quota.used} of {quota.limit} URLs used</span>
                 <span>{quota.remaining} remaining</span>
               </div>
               <Progress 
@@ -224,7 +225,7 @@ const URLShortenerForm = () => {
 
               {!user && quota?.remaining === 0 && (
                 <div className="mt-2 text-center text-amber-600 dark:text-amber-400 text-sm">
-                  You've reached the daily limit. Sign in to create more URLs.
+                  Los usuarios anónimos han alcanzado el límite diario. Inicia sesión para crear más URLs.
                 </div>
               )}
             </form>

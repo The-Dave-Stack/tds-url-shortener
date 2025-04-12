@@ -5,13 +5,11 @@ import { getClientId } from '@/utils/anonymous-client';
 import { AnonymousQuota, UrlData } from './api-types';
 
 /**
- * Check if an anonymous user has reached their daily quota
+ * Check the anonymous users shared daily quota
  * @returns Promise with the quota information
  */
 export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
   try {
-    const clientId = getClientId();
-    
     // Get the daily limit from app_settings
     const { data: settingsData } = await supabase
       .from('app_settings')
@@ -24,22 +22,20 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
       (typeof settingsData.value === 'object' && settingsData.value !== null && 'limit' in settingsData.value ? 
         Number(settingsData.value.limit) : 50) : 50;
     
-    // Check the current usage for today
+    // Check the current usage for today for all anonymous users
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     
-    const { data: quotaData, error } = await supabase
-      .from('anonymous_daily_quota')
-      .select('count')
-      .eq('client_id', clientId)
-      .eq('date', today)
-      .single();
+    const { count, error } = await supabase
+      .from('anonymous_urls')
+      .select('*', { count: 'exact', head: true })
+      .eq('created_at::date', today);
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-      console.error('Error checking quota:', error);
-      throw new Error('Error checking quota');
+    if (error) {
+      console.error('Error checking anonymous quota:', error);
+      throw error;
     }
     
-    const usedCount = quotaData?.count || 0;
+    const usedCount = count || 0;
     
     return {
       used: usedCount,
@@ -101,15 +97,15 @@ export const createShortUrl = async (
       // Create URL for anonymous user
       const clientId = getClientId();
       
-      // Check quota before creating
+      // Check shared anonymous quota before creating
       const quota = await checkAnonymousQuota();
       if (quota.remaining <= 0) {
-        throw new Error('Has alcanzado el límite diario de URLs acortadas. Inicia sesión para crear más.');
+        throw new Error('Se ha alcanzado el límite diario de URLs acortadas anónimas. Inicia sesión para crear más.');
       }
       
       const shortCode = customAlias || generateShortCode();
       
-      // Insert the URL
+      // Insert the URL - we still track client_id for reference but don't use it for quota enforcement
       const { data: urlData, error: urlError } = await supabase
         .from('anonymous_urls')
         .insert([
@@ -117,7 +113,7 @@ export const createShortUrl = async (
             original_url: originalUrl,
             short_code: shortCode,
             custom_alias: customAlias || null,
-            client_id: clientId
+            client_id: clientId // Keep tracking client_id but don't use it for quota
           }
         ])
         .select()
@@ -129,35 +125,7 @@ export const createShortUrl = async (
         throw new Error('Error al crear la URL acortada');
       }
       
-      // Update or insert quota record
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      
-      // Use a more direct approach to update the quota since the RPC function is not working
-      const { data: existingQuota } = await supabase
-        .from('anonymous_daily_quota')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('date', today)
-        .single();
-      
-      if (existingQuota) {
-        // Update existing quota
-        await supabase
-          .from('anonymous_daily_quota')
-          .update({ count: existingQuota.count + 1 })
-          .eq('id', existingQuota.id);
-      } else {
-        // Insert new quota record
-        await supabase
-          .from('anonymous_daily_quota')
-          .insert([
-            {
-              client_id: clientId,
-              date: today,
-              count: 1
-            }
-          ]);
-      }
+      // We don't need to update individual client quota anymore since we're using a shared quota
       
       return {
         id: urlData.id,
