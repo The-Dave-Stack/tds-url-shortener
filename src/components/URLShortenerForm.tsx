@@ -42,7 +42,7 @@ const URLShortenerForm = () => {
     },
   });
 
-  // Fetch quota information when the component mounts or when a URL is created
+  // Fetch quota information from the database
   const fetchQuota = async () => {
     if (!user) {
       try {
@@ -55,7 +55,7 @@ const URLShortenerForm = () => {
     }
   };
   
-  // Check quota for anonymous users
+  // Check quota when component mounts or when user auth state changes
   useEffect(() => {
     fetchQuota();
   }, [user]);
@@ -82,7 +82,7 @@ const URLShortenerForm = () => {
       
       toast.success("URL shortened successfully!");
       
-      // Update quota for anonymous users
+      // Update quota immediately for anonymous users
       if (!user) {
         await fetchQuota();
       }
