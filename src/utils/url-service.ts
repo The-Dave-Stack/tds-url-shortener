@@ -10,11 +10,17 @@ import { AnonymousQuota, UrlData } from './api-types';
 export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
   try {
     // Get the daily limit from app_settings
-    const { data: settingsData } = await supabase
+    const { data: settingsData, error: settingsError } = await supabase
       .from('app_settings')
       .select('value')
-      .eq('key', 'anonymous_daily_limit')
-      .single();
+      .ilike('key', 'anonymous_daily_limit')
+      .maybeSingle();
+
+    console.log('Settings data:', settingsData, settingsError);
+
+    if (settingsError || !settingsData) {
+      console.warn('Configuration for anonymous_daily_limit not found, using the default value.', settingsError);
+    }
     
     // Default to 50 if not found or invalid
     let dailyLimit = 50; // Default value
@@ -31,13 +37,21 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
       }
     }
     
-    // Check the current usage for today for all anonymous users
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    // Calculate UTC date range boundaries concisely
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0); // Set to the start of the current day in UTC
+
+    const startOfTodayUTC = date.toISOString();
+
+    // Advance the same date object by one day to get the start of tomorrow
+    date.setUTCDate(date.getUTCDate() + 1);
+    const startOfTomorrowUTC = date.toISOString();
     
     const { count, error } = await supabase
       .from('anonymous_urls')
-      .select('*', { count: 'exact', head: true })
-      .eq('created_at::date', today);
+      .select('*', { count: 'exact', head: true })  // Only fetch the count
+      .gte('created_at', startOfTodayUTC)           // Greater than or equal to start of today
+      .lt('created_at', startOfTomorrowUTC);        // Less than start of tomorrow
     
     if (error) {
       console.error('Error checking anonymous quota:', error);
