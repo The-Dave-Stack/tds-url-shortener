@@ -10,16 +10,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           single: vi.fn(),
-        })),
-      })),
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
           count: vi.fn(),
           head: vi.fn(),
         })),
       })),
-      count: vi.fn(),
-      head: vi.fn(),
     })),
   },
 }));

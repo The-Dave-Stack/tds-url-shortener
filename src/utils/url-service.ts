@@ -22,8 +22,8 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
     
     // Safely parse the value if it exists
     if (settingsData?.value) {
-      // Avoid type recursion by treating value as a Record type
-      const valueObj = settingsData.value as Record<string, any>;
+      // Use a type assertion to avoid recursion
+      const valueObj = settingsData.value as Record<string, unknown>;
       if (typeof valueObj === 'object' && valueObj !== null && 'limit' in valueObj) {
         const limitValue = Number(valueObj.limit);
         if (!isNaN(limitValue)) {
