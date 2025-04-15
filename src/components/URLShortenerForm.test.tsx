@@ -49,13 +49,13 @@ describe('URLShortenerForm', () => {
     render(<URLShortenerForm />);
     
     // Check that the form fields are rendered
-    expect(screen.getByText(/Shorten Your URL/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/URL to shorten/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Custom alias/i)).toBeInTheDocument();
-    
-    // Check that quota information is displayed for anonymous users
     await waitFor(() => {
-      expect(screen.getByText(/Daily anonymous limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/Shorten Your URL/i)).toBeTruthy();
+      expect(screen.getByLabelText(/URL to shorten/i)).toBeTruthy();
+      expect(screen.getByLabelText(/Custom alias/i)).toBeTruthy();
+      
+      // Check that quota information is displayed for anonymous users
+      expect(screen.getByText(/Daily anonymous limit/i)).toBeTruthy();
     });
   });
 

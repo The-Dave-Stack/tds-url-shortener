@@ -6,12 +6,21 @@ import { supabase } from '@/integrations/supabase/client';
 // Mock the Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn(),
-    count: vi.fn(),
-    head: vi.fn(),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(),
+        })),
+      })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          count: vi.fn(),
+          head: vi.fn(),
+        })),
+      })),
+      count: vi.fn(),
+      head: vi.fn(),
+    })),
   },
 }));
 
@@ -36,8 +45,24 @@ describe('URL Service', () => {
         error: null
       };
 
-      (supabase.from().select().eq().single as any).mockResolvedValue(mockSettingsData);
-      (supabase.from().select().eq as any).mockResolvedValue(mockCountData);
+      // Set up proper chaining for mocks
+      const mockSingle = vi.fn().mockResolvedValue(mockSettingsData);
+      const mockEqForSettings = vi.fn().mockReturnValue({ single: mockSingle });
+      const mockSelectForSettings = vi.fn().mockReturnValue({ eq: mockEqForSettings });
+      
+      const mockHead = vi.fn().mockResolvedValue(mockCountData);
+      const mockEqForCount = vi.fn().mockReturnValue({ head: mockHead });
+      const mockSelectForCount = vi.fn().mockReturnValue({ eq: mockEqForCount });
+      
+      // First call for settings
+      (supabase.from as any).mockImplementationOnce(() => ({
+        select: mockSelectForSettings
+      }));
+      
+      // Second call for count
+      (supabase.from as any).mockImplementationOnce(() => ({
+        select: mockSelectForCount
+      }));
 
       const result = await checkAnonymousQuota();
       
@@ -54,7 +79,13 @@ describe('URL Service', () => {
 
     it('should handle errors gracefully', async () => {
       // Mock an error in the query
-      (supabase.from().select().eq().single as any).mockRejectedValue(new Error('Database error'));
+      const mockSingle = vi.fn().mockRejectedValue(new Error('Database error'));
+      const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      
+      (supabase.from as any).mockImplementation(() => ({
+        select: mockSelect
+      }));
 
       const result = await checkAnonymousQuota();
       
