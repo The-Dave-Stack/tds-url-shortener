@@ -63,15 +63,31 @@ Deno.serve(async (req) => {
       originalUrl = anonUrlData.original_url
       isAnonymousUrl = true
       
-      // Increment clicks counter for anonymous URLs
-      await supabase.rpc('increment_anonymous_clicks', { url_id_param: urlId })
+      // Increment clicks counter for anonymous URLs directly
+      // This fixes the issue where clicks weren't being recorded properly
+      const { error: updateError } = await supabase
+        .from('anonymous_urls')
+        .update({ clicks: supabase.rpc('increment') })
+        .eq('id', urlId)
+      
+      if (updateError) {
+        console.error('Error incrementing anonymous clicks:', updateError)
+      }
     } else {
       // It's a registered user URL
       urlId = urlData.id
       originalUrl = urlData.original_url
       
-      // Increment clicks counter for registered URLs
-      await supabase.rpc('increment_clicks', { url_id: urlId })
+      // Increment clicks counter for registered URLs directly
+      // This fixes the issue where clicks weren't being recorded properly
+      const { error: updateError } = await supabase
+        .from('urls')
+        .update({ clicks: supabase.rpc('increment') })
+        .eq('id', urlId)
+      
+      if (updateError) {
+        console.error('Error incrementing clicks:', updateError)
+      }
     }
     
     // Get geolocation data from IP (using Cloudflare headers if available)
