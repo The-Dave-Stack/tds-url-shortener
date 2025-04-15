@@ -4,10 +4,6 @@ import { generateShortCode } from '@/utils/validation';
 import { getClientId } from '@/utils/anonymous-client';
 import { AnonymousQuota, UrlData } from './api-types';
 
-/**
- * Check the anonymous users shared daily quota
- * @returns Promise with the quota information
- */
 export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
   try {
     // Get the daily limit from app_settings
@@ -28,7 +24,6 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
     
     // Safely parse the value if it exists
     if (settingsData?.value) {
-      // Usar tipo Record para evitar problemas de recursión
       const valueObj = settingsData.value as Record<string, any>;
       if (valueObj && typeof valueObj === 'object' && 'limit' in valueObj) {
         const limitValue = Number(valueObj.limit);
@@ -72,12 +67,6 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
   }
 };
 
-/**
- * Create a short URL
- * @param originalUrl The original URL to shorten
- * @param customAlias Optional custom alias for the short URL
- * @returns Promise with the created URL data
- */
 export const createShortUrl = async (
   originalUrl: string,
   customAlias?: string
@@ -108,6 +97,9 @@ export const createShortUrl = async (
       if (!data) {
         throw new Error('Error al crear la URL acortada');
       }
+      
+      // Update clicks using RPC function
+      await supabase.rpc('increment_clicks', { url_id: data.id });
       
       return {
         id: data.id,
@@ -149,7 +141,8 @@ export const createShortUrl = async (
         throw new Error('Error al crear la URL acortada');
       }
       
-      // We don't need to update individual client quota anymore since we're using a shared quota
+      // Update anonymous URL clicks using RPC function
+      await supabase.rpc('increment_anonymous_clicks', { url_id: urlData.id });
       
       return {
         id: urlData.id,

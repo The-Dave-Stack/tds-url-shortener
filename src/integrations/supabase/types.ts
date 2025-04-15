@@ -212,6 +212,18 @@ export type Database = {
         Args: { user_id: string }
         Returns: string
       }
+      increment: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      increment_anonymous_clicks: {
+        Args: { url_id: string }
+        Returns: undefined
+      }
+      increment_anonymous_quota: {
+        Args: { client_id_param: string; date_param: string }
+        Returns: undefined
+      }
       increment_clicks: {
         Args: { url_id: string }
         Returns: undefined
