@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { generateShortCode } from '@/utils/validation';
 import { getClientId } from '@/utils/anonymous-client';
@@ -27,9 +28,9 @@ export const checkAnonymousQuota = async (): Promise<AnonymousQuota> => {
     
     // Safely parse the value if it exists
     if (settingsData?.value) {
-      // Use a type assertion to avoid TypeScript recursion issues
-      const valueObj = settingsData.value as any;
-      if (typeof valueObj === 'object' && valueObj !== null && 'limit' in valueObj) {
+      // Fix the recursion by using a simple type cast
+      const valueObj = settingsData.value as { limit?: number };
+      if (valueObj && typeof valueObj === 'object' && 'limit' in valueObj) {
         const limitValue = Number(valueObj.limit);
         if (!isNaN(limitValue)) {
           dailyLimit = limitValue;
