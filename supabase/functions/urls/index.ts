@@ -1,55 +1,54 @@
-
 // URLs API Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
 import { corsHeaders } from '../_shared/cors.ts'
 
-// El cliente de Supabase en el edge function
+// Supabase client in the edge function
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 Deno.serve(async (req) => {
-  // Maneja CORS para solicitudes de preflight
+  // Handle CORS for preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Obtener datos de la solicitud
+    // Get request data
     const { method, url } = req
     const requestUrl = new URL(url)
     const path = requestUrl.pathname.split('/').filter(Boolean).slice(1)
     let body = null
     
-    // Parse body si existe
+    // Parse body if it exists
     if (method !== 'GET' && method !== 'HEAD') {
       body = await req.json().catch(() => null)
     }
 
-    // Verificar autenticación del usuario
+    // Verify user authentication
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Autenticación requerida' }),
+        JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Extraer el token JWT del encabezado de autorización
+    // Extract JWT token from authorization header
     const token = authHeader.replace('Bearer ', '')
     
-    // Verificar el token con Supabase
+    // Verify token with Supabase
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Token inválido' }),
+        JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
     
-    // Rutas API
-    // GET /urls - Obtener todas las URLs del usuario
+    // API Routes
+    // GET /urls - Get all URLs for the user
     if (method === 'GET' && path.length === 0) {
       const { data, error } = await supabase
         .from('urls')
@@ -72,18 +71,18 @@ Deno.serve(async (req) => {
       )
     }
     
-    // POST /urls - Crear una nueva URL acortada
+    // POST /urls - Create a new shortened URL
     if (method === 'POST' && path.length === 0 && body) {
       const { originalUrl, customAlias } = body
       
       if (!originalUrl) {
         return new Response(
-          JSON.stringify({ error: 'originalUrl es requerida' }),
+          JSON.stringify({ error: 'originalUrl is required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
-      // Generar un código corto aleatorio si no se proporciona un alias personalizado
+      // Generate a random short code if no custom alias is provided
       const shortCode = customAlias || generateShortCode()
       
       const { data, error } = await supabase
@@ -100,10 +99,10 @@ Deno.serve(async (req) => {
         .single()
       
       if (error) {
-        // Verificar si el error es por un código corto duplicado
+        // Check if the error is due to a duplicate short code
         if (error.code === '23505') {
           return new Response(
-            JSON.stringify({ error: 'El alias personalizado ya está en uso' }),
+            JSON.stringify({ error: 'Custom alias is already in use' }),
             { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
@@ -123,7 +122,7 @@ Deno.serve(async (req) => {
       )
     }
     
-    // GET /urls/:id - Obtener una URL específica
+    // GET /urls/:id - Get a specific URL
     if (method === 'GET' && path.length === 1) {
       const id = path[0]
       
@@ -137,7 +136,7 @@ Deno.serve(async (req) => {
       if (error) {
         if (error.code === 'PGRST116') {
           return new Response(
-            JSON.stringify({ error: 'URL no encontrada' }),
+            JSON.stringify({ error: 'URL not found' }),
             { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
@@ -157,7 +156,7 @@ Deno.serve(async (req) => {
       )
     }
     
-    // DELETE /urls/:id - Eliminar una URL
+    // DELETE /urls/:id - Delete a URL
     if (method === 'DELETE' && path.length === 1) {
       const id = path[0]
       
@@ -172,23 +171,23 @@ Deno.serve(async (req) => {
       return new Response(null, { status: 204, headers: corsHeaders })
     }
     
-    // Si la ruta no coincide con ninguna de las anteriores
+    // If the route does not match any of the above
     return new Response(
-      JSON.stringify({ error: 'Ruta no encontrada' }),
+      JSON.stringify({ error: 'Route not found' }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
     
   } catch (error) {
-    console.error('Error en la solicitud:', error)
+    console.error('Error in request:', error)
     
     return new Response(
-      JSON.stringify({ error: 'Error interno del servidor' }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
 
-// Función para generar un código corto aleatorio
+// Function to generate a random short code
 function generateShortCode(length = 6): string {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''

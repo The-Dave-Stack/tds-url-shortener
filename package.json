@@ -8,7 +8,11 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migration:new": "node scripts/db-migration.js",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:types": "node scripts/update-types.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

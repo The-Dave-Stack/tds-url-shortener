@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
@@ -35,7 +34,7 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
       <div className="px-6 pb-2">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium">
-            Clics a lo largo del tiempo
+            Clicks Over Time
           </h4>
           <div className="flex items-center space-x-2">
             <button
@@ -46,7 +45,7 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
                 : "text-gray-500 hover:bg-gray-100"
               }`}
             >
-              7 días
+               7 days
             </button>
             <button
               onClick={() => setTimeRange("30d")}
@@ -56,7 +55,7 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
                 : "text-gray-500 hover:bg-gray-100"
               }`}
             >
-              30 días
+               30 days
             </button>
           </div>
         </div>
@@ -82,7 +81,7 @@ const ClicksChart = ({ data }: ClicksChartProps) => {
               tickFormatter={(value) => value}
             />
             <Tooltip 
-              formatter={(value) => [`${value} clics`, 'Clics']}
+              formatter={(value) => [`${value} clicks`, 'Clicks']}
               labelFormatter={(label) => {
                 const date = new Date(label);
                 return date.toLocaleDateString();

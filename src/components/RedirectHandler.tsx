@@ -1,22 +1,21 @@
-
 /**
  * RedirectHandler Component
- * Maneja la redirección de URL basada en códigos cortos y registra analíticas
+ * Handles URL redirection based on short codes and logs analytics
  */
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-// URL base de la API (edge function)
+// Base URL of the API (edge function)
 const SUPABASE_URL = "https://zzzrllcoaqtszrskzxrg.supabase.co";
 
 /**
  * RedirectHandler component
- * Este componente:
- * 1. Extrae el shortCode de los parámetros URL
- * 2. Llama a la edge function de redirección
- * 3. Redirige al usuario a la URL original
+ * This component:
+ * 1. Extracts the shortCode from the URL parameters
+ * 2. Calls the redirection edge function
+ * 3. Redirects the user to the original URL
  */
 const RedirectHandler = () => {
   const { shortCode } = useParams<{ shortCode: string }>();
@@ -25,8 +24,8 @@ const RedirectHandler = () => {
 
   useEffect(() => {
     /**
-     * Procesa la redirección
-     * Llama a la edge function de redirección y redirige al usuario
+     * Processes the redirection
+     * Calls the redirection edge function and redirects the user
      */
     const handleRedirect = async () => {
       if (!shortCode) {
@@ -35,7 +34,7 @@ const RedirectHandler = () => {
       }
 
       try {
-        // Llamar a la edge function de redirección
+        // Calls the redirection edge function
         const response = await fetch(`${SUPABASE_URL}/functions/v1/redirect/${shortCode}`, {
           method: 'GET',
           headers: {
@@ -44,18 +43,18 @@ const RedirectHandler = () => {
         });
 
         if (!response.ok) {
-          throw new Error("URL no encontrada");
+          throw new Error("URL not found");
         }
 
         const data = await response.json();
         
-        // Redirigir al usuario a la URL original
+        // Redirect the user to the original URL
         window.location.href = data.originalUrl;
       } catch (error) {
-        console.error("Error de redirección:", error);
-        setError("La URL solicitada no existe o ha sido eliminada.");
+        console.error("Redirection error:", error);
+        setError("The requested URL does not exist or has been deleted.");
         
-        // Redirigir a la página de inicio después de un retraso
+        // Redirect to the homepage after a delay
         setTimeout(() => {
           navigate('/');
         }, 3000);
@@ -69,14 +68,14 @@ const RedirectHandler = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-fog-gray dark:bg-night-blue text-petrol-blue dark:text-fog-gray">
       {error ? (
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Enlace no encontrado</h1>
+          <h1 className="text-2xl font-bold mb-2">Link not found</h1>
           <p className="text-petrol-blue/80 dark:text-fog-gray/80 mb-4">{error}</p>
-          <p className="text-petrol-blue/60 dark:text-fog-gray/60">Redirigiendo a la página de inicio...</p>
+          <p className="text-petrol-blue/60 dark:text-fog-gray/60">Redirecting to the homepage...</p>
         </div>
       ) : (
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-teal-deep mx-auto mb-4" />
-          <p className="text-lg">Redirigiendo...</p>
+          <p className="text-lg">Redirecting...</p>
         </div>
       )}
     </div>

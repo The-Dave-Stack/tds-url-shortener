@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,13 +78,13 @@ const CountryDistribution = ({ data }: CountryDistributionProps) => {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="px-6 pb-2">
-        <h4 className="text-sm font-medium">Distribución por país</h4>
+        <h4 className="text-sm font-medium">Country Distribution</h4>
       </div>
       <div className="flex-1">
         <Tabs value={activeView} onValueChange={(val) => setActiveView(val as "chart" | "map")} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-2 mb-2">
-            <TabsTrigger value="chart">Gráfico</TabsTrigger>
-            <TabsTrigger value="map">Mapa</TabsTrigger>
+            <TabsTrigger value="chart">Chart</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
           </TabsList>
           
           <div className="flex-1">
@@ -125,7 +124,7 @@ const CountryDistribution = ({ data }: CountryDistributionProps) => {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-500">
-                  No hay datos de países disponibles
+                  No country data available
                 </div>
               )}
             </TabsContent>
@@ -159,7 +158,7 @@ const CountryDistribution = ({ data }: CountryDistributionProps) => {
                   </MapContainer>
                 ) : (
                   <div className="h-full flex items-center justify-center text-gray-500">
-                    No hay datos de países con coordenadas disponibles
+                    No countries with coordinates available
                   </div>
                 )}
               </div>

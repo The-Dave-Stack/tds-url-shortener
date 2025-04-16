@@ -1,0 +1,6 @@
+{
+  "migrations": {
+    "autorun": true,
+    "dir": "./migrations"
+  }
+}

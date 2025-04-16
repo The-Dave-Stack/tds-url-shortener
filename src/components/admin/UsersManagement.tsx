@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -160,13 +159,13 @@ const UsersManagement = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{t("admin.usersList")}</h2>
+      <h2 className="text-2xl font-bold">User List</h2>
       
       <Card>
         <CardHeader>
-          <CardTitle>{t("admin.users")}</CardTitle>
+          <CardTitle>Users</CardTitle>
           <CardDescription>
-            {t("admin.usersList")}
+            User List
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -174,18 +173,18 @@ const UsersManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("admin.email")}</TableHead>
-                  <TableHead>{t("admin.role")}</TableHead>
-                  <TableHead>{t("admin.status")}</TableHead>
-                  <TableHead>{t("admin.userStats")}</TableHead>
-                  <TableHead>{t("common.actions")}</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>User Stats</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-6">
-                      {t("admin.noUsers")}
+                      No Users
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -196,12 +195,12 @@ const UsersManagement = () => {
                         {user.role === 'ADMIN' ? (
                           <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
                             <ShieldAlert className="h-3 w-3 mr-1" />
-                            {t("admin.role")}: {user.role}
+                            Role: Admin
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
                             <ShieldCheck className="h-3 w-3 mr-1" />
-                            {t("admin.role")}: {user.role}
+                            Role: User
                           </Badge>
                         )}
                       </TableCell>
@@ -209,20 +208,20 @@ const UsersManagement = () => {
                         {user.is_active ? (
                           <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
                             <UserCheck className="h-3 w-3 mr-1" />
-                            {t("admin.active")}
+                            Active
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
                             <UserX className="h-3 w-3 mr-1" />
-                            {t("admin.inactive")}
+                            Inactive
                           </Badge>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div>{t("admin.totalUrls")}: {user.urls_count}</div>
-                          <div>{t("admin.totalClicks")}: {user.total_clicks}</div>
-                          <div>{t("admin.lastActivity")}: {user.last_activity ? format(new Date(user.last_activity), 'PP') : '-'}</div>
+                          <div>Total URLs: {user.urls_count}</div>
+                          <div>Total Clicks: {user.total_clicks}</div>
+                          <div>Last Activity: {user.last_activity ? format(new Date(user.last_activity), 'PP') : '-'}</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -235,7 +234,7 @@ const UsersManagement = () => {
                               className="text-xs"
                             >
                               <ShieldAlert className="h-3 w-3 mr-1" />
-                              {t("admin.setAdmin")}
+                              Set Admin
                             </Button>
                           ) : (
                             <Button 
@@ -245,7 +244,7 @@ const UsersManagement = () => {
                               className="text-xs"
                             >
                               <ShieldCheck className="h-3 w-3 mr-1" />
-                              {t("admin.setUser")}
+                              Set User
                             </Button>
                           )}
                           
@@ -257,7 +256,7 @@ const UsersManagement = () => {
                               className="text-xs border-alert-red text-alert-red hover:bg-alert-red/10"
                             >
                               <UserX className="h-3 w-3 mr-1" />
-                              {t("admin.disableUser")}
+                              Disable User
                             </Button>
                           ) : (
                             <Button 
@@ -267,7 +266,7 @@ const UsersManagement = () => {
                               className="text-xs"
                             >
                               <UserCheck className="h-3 w-3 mr-1" />
-                              {t("admin.enableUser")}
+                              Enable User
                             </Button>
                           )}
                           
@@ -278,7 +277,7 @@ const UsersManagement = () => {
                             className="text-xs"
                           >
                             <MessageSquare className="h-3 w-3 mr-1" />
-                            {t("admin.sendMessage")}
+                            Send Message
                           </Button>
                         </div>
                       </TableCell>
@@ -296,21 +295,21 @@ const UsersManagement = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {action === 'setAdmin' && t("admin.setAdmin")}
-              {action === 'setUser' && t("admin.setUser")}
-              {action === 'disable' && t("admin.disableUser")}
-              {action === 'enable' && t("admin.enableUser")}
+              {action === 'setAdmin' && "Set Admin"}
+              {action === 'setUser' && "Set User"}
+              {action === 'disable' && "Disable User"}
+              {action === 'enable' && "Enable User"}
             </DialogTitle>
             <DialogDescription>
-              {action === 'disable' && t("admin.confirmDisable")}
-              {action === 'enable' && t("admin.confirmEnable")}
+              {action === 'disable' && "Are you sure you want to disable this user?"}
+              {action === 'enable' && "Are you sure you want to enable this user?"}
               {(action === 'setAdmin' || action === 'setUser') && 
-                `${t("admin.editUser")}: ${selectedUser?.email}`}
+                `Edit User: ${selectedUser?.email}`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setActionDialogOpen(false)}>
-              {t("common.cancel")}
+              Cancel
             </Button>
             <Button 
               onClick={() => {
@@ -327,7 +326,7 @@ const UsersManagement = () => {
                 }
               }}
             >
-              {t("common.yes")}
+              Yes
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -337,38 +336,38 @@ const UsersManagement = () => {
       <Dialog open={messagingOpen} onOpenChange={setMessagingOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("admin.sendMessage")}</DialogTitle>
+            <DialogTitle>Send Message</DialogTitle>
             <DialogDescription>
-              {t("admin.sendMessage")}: {selectedUser?.email}
+              Send Message: {selectedUser?.email}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label htmlFor="title">{t("admin.messageTitle")}</label>
+              <label htmlFor="title">Message Title</label>
               <Input 
                 id="title" 
                 value={messageTitle}
                 onChange={(e) => setMessageTitle(e.target.value)}
-                placeholder={t("admin.messageTitle")}
+                placeholder="Message Title"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="message">{t("admin.messageContent")}</label>
+              <label htmlFor="message">Message Content</label>
               <Textarea 
                 id="message" 
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
-                placeholder={t("admin.messageContent")}
+                placeholder="Message Content"
                 rows={5}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMessagingOpen(false)}>
-              {t("common.cancel")}
+              Cancel
             </Button>
             <Button onClick={handleSendMessage}>
-              {t("common.send")}
+              Send
             </Button>
           </DialogFooter>
         </DialogContent>
